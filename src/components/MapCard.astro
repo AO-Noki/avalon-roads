@@ -1,0 +1,246 @@
+---
+import type { Map, ChestItem, DungeonItem, ResourceItem } from '../types/map';
+
+interface Props {
+  map: Map;
+}
+
+const { map } = Astro.props;
+
+// Ícones para baús
+const chestIcons = {
+  'BLUE': { 
+    small: 'chest_blue.png', 
+    large: 'chest_blue_large.png', 
+    label: 'Baú Azul' 
+  },
+  'GREEN': { 
+    small: 'chest_green.png', 
+    large: 'chest_green_large.png', 
+    label: 'Baú Verde' 
+  },
+  'GOLD': { 
+    small: 'chest_gold.png', 
+    large: 'chest_gold_large.png', 
+    label: 'Baú Dourado' 
+  }
+};
+
+// Ícones para dungeons
+const dungeonIcons = {
+  'DUNGEON_SOLO': { 
+    small: 'dungeon_solo.png', 
+    large: 'dungeon_solo_large.png', 
+    label: 'Dungeon Solo' 
+  },
+  'DUNGEON_GROUP': { 
+    small: 'dungeon_group.png', 
+    large: 'dungeon_group_large.png', 
+    label: 'Dungeon Grupo' 
+  },
+  'DUNGEON_AVALON': { 
+    small: 'dungeon_avalon.png', 
+    large: 'dungeon_avalon_large.png', 
+    label: 'Dungeon Avalon' 
+  }
+};
+
+// Ícones para recursos
+const resourceIcons = {
+  'STONE': { 
+    small: 'resource_stone.png', 
+    large: 'resource_stone_large.png', 
+    label: 'Pedra' 
+  },
+  'WOOD': { 
+    small: 'resource_wood.png', 
+    large: 'resource_wood_large.png', 
+    label: 'Madeira' 
+  },
+  'ORE': { 
+    small: 'resource_ore.png', 
+    large: 'resource_ore_large.png', 
+    label: 'Minério' 
+  },
+  'HIDE': { 
+    small: 'resource_hide.png', 
+    large: 'resource_hide_large.png', 
+    label: 'Couro' 
+  },
+  'FIBER': { 
+    small: 'resource_fiber.png', 
+    large: 'resource_fiber_large.png', 
+    label: 'Fibra' 
+  }
+};
+
+const getTierClass = (tier: number) => {
+  switch (tier) {
+    case 4: return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+    case 5: return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+    case 6: return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
+    case 7: return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+    case 8: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
+    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+  }
+};
+
+const getChestIcon = (chest: ChestItem) => {
+  const iconInfo = chestIcons[chest.type];
+  if (!iconInfo) {
+    console.warn(`No icon found for chest type: ${chest.type}`);
+    return { iconPath: '/icons/chest_unknown.png', label: chest.type };
+  }
+  
+  // Usar o ícone específico de tamanho ou o fornecido na propriedade icon
+  let iconPath = '';
+  if (chest.icon) {
+    // Se o ícone foi especificado no JSON, use-o diretamente
+    iconPath = chest.icon.endsWith('.png') ? chest.icon : `${chest.icon}.png`;
+  } else {
+    // Senão, use os padrões
+    iconPath = `/icons/${chest.size === 'large' ? iconInfo.large : iconInfo.small}`;
+  }
+  
+  const sizeLabel = chest.size === 'large' ? 'Grande' : 'Pequeno';
+  return { 
+    iconPath, 
+    label: `${iconInfo.label} (${sizeLabel})` 
+  };
+};
+
+const getDungeonIcon = (dungeon: DungeonItem) => {
+  const iconInfo = dungeonIcons[dungeon.type];
+  if (!iconInfo) {
+    console.warn(`No icon found for dungeon type: ${dungeon.type}`);
+    return { iconPath: '/icons/dungeon_unknown.png', label: dungeon.type };
+  }
+  
+  let iconPath = '';
+  if (dungeon.icon) {
+    // Se o ícone foi especificado no JSON, use-o diretamente
+    iconPath = dungeon.icon.endsWith('.png') ? dungeon.icon : `${dungeon.icon}.png`;
+  } else {
+    // Senão, use os padrões
+    iconPath = `/icons/${dungeon.size === 'large' ? iconInfo.large : iconInfo.small}`;
+  }
+  
+  const sizeLabel = dungeon.size === 'large' ? 'Grande' : 'Pequeno';
+  return { 
+    iconPath, 
+    label: `${iconInfo.label} (${sizeLabel})` 
+  };
+};
+
+const getResourceIcon = (resource: ResourceItem) => {
+  const iconInfo = resourceIcons[resource.type];
+  if (!iconInfo) {
+    console.warn(`No icon found for resource type: ${resource.type}`);
+    return { iconPath: '/icons/resource_unknown.png', label: resource.type };
+  }
+  
+  let iconPath = '';
+  if (resource.icon) {
+    // Se o ícone foi especificado no JSON, use-o diretamente
+    iconPath = resource.icon.endsWith('.png') ? resource.icon : `${resource.icon}.png`;
+  } else {
+    // Senão, use os padrões
+    iconPath = `/icons/${resource.size === 'large' ? iconInfo.large : iconInfo.small}`;
+  }
+  
+  const sizeLabel = resource.size === 'large' ? 'Grande' : 'Pequeno';
+  return { 
+    iconPath, 
+    label: `${iconInfo.label} (${sizeLabel})` 
+  };
+};
+
+type ResourceDisplay = {
+  iconPath: string;
+  label: string;
+  size: 'small' | 'large';
+  count?: number;
+};
+
+// Obtém todos os recursos formatados para exibição
+const getAllResources = (): ResourceDisplay[] => {
+  const allResources: ResourceDisplay[] = [
+    ...(map.chests || []).map(chest => {
+      const { iconPath, label } = getChestIcon(chest);
+      return { iconPath, label, size: chest.size, count: chest.count };
+    }),
+    ...(map.dungeons || []).map(dungeon => {
+      const { iconPath, label } = getDungeonIcon(dungeon);
+      return { iconPath, label, size: dungeon.size, count: dungeon.count };
+    }),
+    ...(map.resources || []).map(resource => {
+      const { iconPath, label } = getResourceIcon(resource);
+      return { iconPath, label, size: resource.size, count: resource.count };
+    })
+  ];
+  return allResources;
+};
+---
+
+<div class="map-card bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-lg dark:hover:shadow-gray-700/30">
+  <div class="flex justify-between items-start mb-3">
+    <h3 class="text-base font-medium text-gray-900 dark:text-gray-100">{map.name}</h3>
+    <span class={`tier-badge ${getTierClass(map.tier)} px-3 py-1 rounded-full text-xs font-semibold`}>
+      Tier {map.tier}
+    </span>
+  </div>
+  
+  <div class="flex flex-wrap gap-2 min-h-[48px] mb-3">
+    {getAllResources().map(resource => (
+      <div class="resource-icon group relative" title={resource.label}>
+        {resource.count && resource.count > 1 && (
+          <span class="resource-count absolute -top-2 -right-2 bg-white dark:bg-gray-700 shadow-sm rounded-full px-1.5 py-0.5 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+            {resource.count}
+          </span>
+        )}
+        <div class={`w-8 h-8 bg-gray-50 dark:bg-gray-700 rounded-lg p-1 transition-transform transform hover:scale-110 ${resource.size === 'large' ? 'ring-2 ring-yellow-400' : ''}`}>
+          <img 
+            src={resource.iconPath} 
+            alt={resource.label}
+            class="w-full h-full object-contain"
+            loading="lazy"
+            onerror="this.onerror=null; this.src='/icons/resource_unknown.png';"
+          />
+        </div>
+        <div class="opacity-0 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md py-1 px-2 absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 pointer-events-none transition-opacity group-hover:opacity-100 whitespace-nowrap z-10">
+          {resource.label}{resource.count && resource.count > 1 ? ` (${resource.count})` : ''}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <button
+    class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
+    onclick={`
+      const imgPath = '${map.image.startsWith('/') ? map.image : '/maps/' + map.image}';
+      const img = new Image();
+      img.onload = () => window.open(imgPath, '_blank');
+      img.onerror = () => alert('Erro ao carregar a imagem do mapa.');
+      img.src = imgPath;
+    `}
+  >
+    <i class="fas fa-image"></i>
+    Ver Mapa
+  </button>
+</div>
+
+<style>
+  .map-card {
+    background: linear-gradient(to bottom, var(--tw-bg-opacity-from, #ffffff), var(--tw-bg-opacity-to, #fafafa));
+  }
+
+  .dark .map-card {
+    --tw-bg-opacity-from: #1f2937;
+    --tw-bg-opacity-to: #111827;
+  }
+
+  .resource-icon:hover {
+    transform: scale(1.1);
+    transition: transform 0.2s ease;
+  }
+</style>

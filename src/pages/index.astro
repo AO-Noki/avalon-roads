@@ -1,0 +1,404 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MapCard from '../components/MapCard.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import type { Map, ChestType, DungeonType, ResourceType, ChestItem, DungeonItem, ResourceItem } from '../types/map';
+import mapsData from '../data/maps.json';
+
+// Usar os dados reais dos mapas e converter para o tipo correto
+const maps: Map[] = mapsData.maps.map(map => ({
+  ...map,
+  chests: (map.chests || []).map(item => ({
+    type: item.type as ChestType,
+    size: item.size as 'small' | 'large',
+    icon: item.icon,
+    count: item.count
+  })),
+  dungeons: (map.dungeons || []).map(item => ({
+    type: item.type as DungeonType,
+    size: item.size as 'small' | 'large',
+    icon: item.icon,
+    count: item.count
+  })),
+  resources: (map.resources || []).map(item => ({
+    type: item.type as ResourceType,
+    size: item.size as 'small' | 'large',
+    icon: item.icon,
+    count: item.count
+  }))
+}));
+
+// Obter todos os tipos de recursos para filtros
+const chestTypes = Array.from(new Set(
+  maps.flatMap(map => map.chests?.map(r => r.type) || [])
+)).sort() as ChestType[];
+
+const dungeonTypes = Array.from(new Set(
+  maps.flatMap(map => map.dungeons?.map(r => r.type) || [])
+)).sort() as DungeonType[];
+
+const resourceTypes = Array.from(new Set(
+  maps.flatMap(map => map.resources?.map(r => r.type) || [])
+)).sort() as ResourceType[];
+
+// Todos os tipos para filtros
+const allResourceTypes = [...chestTypes, ...dungeonTypes, ...resourceTypes];
+
+const tiers = Array.from(new Set(maps.map(map => map.tier))).sort();
+
+// Data da última atualização
+const lastUpdated = new Date(mapsData.lastUpdated || new Date()).toLocaleDateString('pt-BR', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+});
+
+// Função para obter o ícone do recurso
+const getResourceIcon = (type: string): string => {
+  switch (type) {
+    case 'BLUE': return '/icons/chest_blue.png';
+    case 'GREEN': return '/icons/chest_green.png';
+    case 'GOLD': return '/icons/chest_gold.png';
+    case 'STONE': return '/icons/resource_stone.png';
+    case 'DUNGEON_SOLO': return '/icons/dungeon_solo.png';
+    case 'DUNGEON_GROUP': return '/icons/dungeon_group.png';
+    case 'DUNGEON_AVALON': return '/icons/dungeon_avalon.png';
+    case 'WOOD': return '/icons/resource_wood.png';
+    case 'ORE': return '/icons/resource_ore.png';
+    case 'HIDE': return '/icons/resource_hide.png';
+    case 'FIBER': return '/icons/resource_fiber.png';
+    default: return '/icons/resource_unknown.png';
+  }
+};
+---
+
+<Layout title="Avalon Roads">
+  <header class="bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-900 dark:to-purple-900">
+    <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-4xl font-bold text-white">Avalon Roads</h1>
+        <ThemeToggle />
+      </div>
+      <p class="text-indigo-100 text-lg">
+        Explore <span id="total-maps" class="font-semibold">{maps.length}</span> mapas únicos do Avalon
+      </p>
+      <p class="text-indigo-200 text-sm mt-1">
+        Última atualização: {lastUpdated}
+      </p>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Search Bar -->
+        <div class="relative">
+          <input 
+            type="text" 
+            id="search" 
+            placeholder="Buscar mapas... (Ctrl + K)" 
+            class="w-full px-4 py-2 pl-10 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+          />
+          <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        </div>
+
+        <!-- Sort Controls -->
+        <div class="flex gap-3">
+          <button id="sort-name" class="flex-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+            <i class="fas fa-sort-alpha-down mr-2"></i>Ordenar por Nome
+          </button>
+          <button id="sort-tier" class="flex-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
+            <i class="fas fa-sort-numeric-down mr-2"></i>Ordenar por Tier
+          </button>
+        </div>
+
+        <!-- Tier Filter -->
+        <div class="relative">
+          <select 
+            id="tier-filter" 
+            class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+          >
+            <option value="">Todos os Tiers</option>
+            {tiers.map(tier => (
+              <option value={tier}>Tier {tier}</option>
+            ))}
+          </select>
+          <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+        </div>
+      </div>
+
+      <!-- Resource Filters -->
+      <div class="mt-4 flex flex-wrap gap-2" id="resource-filters">
+        {allResourceTypes.map(type => (
+          <button 
+            class="resource-filter px-3 py-2 rounded-full border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-colors flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200" 
+            data-resource={type}
+          >
+            <img 
+              src={getResourceIcon(type)} 
+              alt={type} 
+              class="w-5 h-5"
+            />
+            {type}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
+      {Array(8).fill(0).map(() => (
+        <div class="map-card bg-white dark:bg-gray-800 p-4 rounded-xl">
+          <div class="flex justify-between items-start mb-3">
+            <div class="loading-skeleton h-6 w-32 rounded"></div>
+            <div class="loading-skeleton h-6 w-16 rounded-full"></div>
+          </div>
+          <div class="flex flex-wrap gap-2 min-h-[48px] mb-3">
+            {Array(4).fill(0).map(() => (
+              <div class="loading-skeleton h-8 w-8 rounded"></div>
+            ))}
+          </div>
+          <div class="loading-skeleton h-9 w-full rounded"></div>
+        </div>
+      ))}
+    </div>
+
+    <!-- Map List -->
+    <div id="map-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {maps.map(map => (
+        <div data-map={JSON.stringify(map)}>
+          <MapCard map={map} />
+        </div>
+      ))}
+    </div>
+
+    <!-- No Results -->
+    <div id="no-results" class="hidden text-center py-12">
+      <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 max-w-md mx-auto">
+        <i class="fas fa-search text-4xl mb-4 text-gray-400 dark:text-gray-500"></i>
+        <p class="text-lg text-gray-600 dark:text-gray-300 font-medium">Nenhum mapa encontrado.</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Tente ajustar sua busca ou filtros.</p>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<script>
+  import type { Map, ChestType, DungeonType, ResourceType } from '../types/map';
+  
+  // State
+  let maps: Map[] = [];
+  let filteredMaps: Map[] = [];
+  let currentSort = { field: 'name', ascending: true };
+  let activeFilters = {
+    resources: new Set<string>(),
+    tier: ''
+  };
+
+  // DOM Elements
+  const mapList = document.getElementById('map-list')!;
+  const loadingElement = document.getElementById('loading')!;
+  const noResultsElement = document.getElementById('no-results')!;
+  const searchInput = document.getElementById('search') as HTMLInputElement;
+  const tierFilter = document.getElementById('tier-filter') as HTMLSelectElement;
+  const sortNameButton = document.getElementById('sort-name')!;
+  const sortTierButton = document.getElementById('sort-tier')!;
+  const resourceFilters = document.querySelectorAll('.resource-filter');
+  const totalMapsElement = document.getElementById('total-maps')!;
+
+  // Functions
+  const toggleLoading = (show: boolean) => {
+    loadingElement.classList.toggle('hidden', !show);
+    mapList.classList.toggle('hidden', show);
+  };
+
+  // Função auxiliar para verificar se um mapa contém um tipo de recurso
+  const mapHasResourceType = (map: Map, resourceType: string): boolean => {
+    const hasInChests = map.chests?.some(item => item.type === resourceType) || false;
+    const hasInDungeons = map.dungeons?.some(item => item.type === resourceType) || false;
+    const hasInResources = map.resources?.some(item => item.type === resourceType) || false;
+    return hasInChests || hasInDungeons || hasInResources;
+  };
+
+  const updateResourceCounts = () => {
+    const counts: Record<string, number> = {};
+    
+    // Contar todos os tipos de recursos nos mapas filtrados
+    filteredMaps.forEach(map => {
+      // Contar baús
+      map.chests?.forEach(chest => {
+        counts[chest.type] = (counts[chest.type] || 0) + 1;
+      });
+      
+      // Contar dungeons
+      map.dungeons?.forEach(dungeon => {
+        counts[dungeon.type] = (counts[dungeon.type] || 0) + 1;
+      });
+      
+      // Contar recursos
+      map.resources?.forEach(resource => {
+        counts[resource.type] = (counts[resource.type] || 0) + 1;
+      });
+    });
+
+    resourceFilters.forEach(button => {
+      const resource = button.getAttribute('data-resource')!;
+      const countElement = button.querySelector('.resource-count');
+      if (countElement) {
+        countElement.textContent = String(counts[resource] || 0);
+      }
+      
+      // Update active state
+      button.classList.toggle('bg-gray-100', activeFilters.resources.has(resource));
+      button.classList.toggle('dark:bg-gray-700', activeFilters.resources.has(resource));
+    });
+
+    totalMapsElement.textContent = String(filteredMaps.length);
+  };
+
+  const renderMaps = () => {
+    const mapElements = document.querySelectorAll('[data-map]');
+    mapElements.forEach(el => {
+      const map = JSON.parse(el.getAttribute('data-map')!);
+      const isVisible = filteredMaps.some(m => m.id === map.id);
+      el.classList.toggle('hidden', !isVisible);
+    });
+  };
+
+  const filterMaps = () => {
+    let filtered = [...maps];
+
+    // Apply tier filter
+    if (activeFilters.tier) {
+      filtered = filtered.filter(map => map.tier === parseInt(activeFilters.tier));
+    }
+
+    // Apply resource filters
+    if (activeFilters.resources.size > 0) {
+      filtered = filtered.filter(map => 
+        Array.from(activeFilters.resources).some(resourceType => 
+          mapHasResourceType(map, resourceType)
+        )
+      );
+    }
+
+    // Apply search filter
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    if (searchTerm) {
+      filtered = filtered.filter(map => {
+        // Verificar nome do mapa
+        const nameMatch = map.name.toLowerCase().includes(searchTerm);
+        
+        // Verificar recursos
+        const resourceMatch = 
+          map.chests?.some(r => r.type.toLowerCase().includes(searchTerm)) ||
+          map.dungeons?.some(r => r.type.toLowerCase().includes(searchTerm)) ||
+          map.resources?.some(r => r.type.toLowerCase().includes(searchTerm));
+        
+        return nameMatch || resourceMatch;
+      });
+    }
+
+    filteredMaps = filtered;
+    noResultsElement.classList.toggle('hidden', filteredMaps.length > 0);
+    mapList.classList.toggle('hidden', filteredMaps.length === 0);
+
+    updateResourceCounts();
+    renderMaps();
+  };
+
+  const sortMaps = (field: 'name' | 'tier') => {
+    [sortNameButton, sortTierButton].forEach(button => {
+      button.classList.remove('bg-gray-100', 'dark:bg-gray-700');
+    });
+    
+    if (currentSort.field === field) {
+      currentSort.ascending = !currentSort.ascending;
+    } else {
+      currentSort.field = field;
+      currentSort.ascending = true;
+    }
+
+    const button = field === 'name' ? sortNameButton : sortTierButton;
+    button.classList.add('bg-gray-100', 'dark:bg-gray-700');
+    
+    filteredMaps.sort((a, b) => {
+      const aValue = a[field];
+      const bValue = b[field];
+      const modifier = currentSort.ascending ? 1 : -1;
+
+      if (typeof aValue === 'string') {
+        return aValue.localeCompare(bValue as string) * modifier;
+      }
+      return ((aValue as number) - (bValue as number)) * modifier;
+    });
+
+    renderMaps();
+  };
+
+  // Event Listeners
+  sortNameButton.addEventListener('click', () => sortMaps('name'));
+  sortTierButton.addEventListener('click', () => sortMaps('tier'));
+  searchInput.addEventListener('input', filterMaps);
+  tierFilter.addEventListener('change', (e) => {
+    activeFilters.tier = (e.target as HTMLSelectElement).value;
+    filterMaps();
+  });
+
+  resourceFilters.forEach(button => {
+    button.addEventListener('click', () => {
+      const resource = button.getAttribute('data-resource')!;
+      if (activeFilters.resources.has(resource)) {
+        activeFilters.resources.delete(resource);
+        button.classList.remove('bg-gray-100', 'dark:bg-gray-700');
+      } else {
+        activeFilters.resources.add(resource);
+        button.classList.add('bg-gray-100', 'dark:bg-gray-700');
+      }
+      filterMaps();
+    });
+  });
+
+  // Adicionar atalho de teclado para busca (Ctrl+K)
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      searchInput.focus();
+    }
+  });
+
+  // Initialize
+  const initializeMaps = () => {
+    maps = Array.from(document.querySelectorAll('[data-map]')).map(el => 
+      JSON.parse(el.getAttribute('data-map')!)
+    );
+    filteredMaps = [...maps];
+    updateResourceCounts();
+  };
+
+  // Initialize on page load and after view transitions
+  document.addEventListener('astro:page-load', initializeMaps);
+  document.addEventListener('DOMContentLoaded', initializeMaps);
+</script>
+
+<style>
+  .loading-skeleton {
+    background: linear-gradient(90deg, 
+      rgba(var(--tw-skeleton-from, 226, 232, 240), 0.8),
+      rgba(var(--tw-skeleton-to, 203, 213, 225), 0.8),
+      rgba(var(--tw-skeleton-from, 226, 232, 240), 0.8)
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+  }
+
+  .dark .loading-skeleton {
+    --tw-skeleton-from: 42, 50, 69;
+    --tw-skeleton-to: 30, 41, 59;
+  }
+
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+</style>

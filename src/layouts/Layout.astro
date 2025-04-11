@@ -1,0 +1,118 @@
+---
+import { ViewTransitions } from 'astro:transitions';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Explorador de mapas Avalon Roads do Albion Online" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <ViewTransitions />
+    <script>
+      // Theme initialization
+      const initTheme = () => {
+        const theme = localStorage.getItem('theme') || 'system';
+        const isDark = theme === 'dark' || 
+          (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        
+        document.documentElement.classList.toggle('dark', isDark);
+        document.documentElement.classList.toggle('light', !isDark);
+      };
+
+      // Initialize theme on page load
+      document.addEventListener('DOMContentLoaded', initTheme);
+      // Re-initialize theme on view transitions
+      document.addEventListener('astro:after-swap', initTheme);
+      // Watch for system theme changes
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', initTheme);
+    </script>
+  </head>
+  <body class="min-h-screen bg-white dark:bg-gray-900 transition-colors flex flex-col">
+    <div class="flex-grow">
+      <slot />
+    </div>
+    
+    <footer class="bg-white dark:bg-gray-800 py-6 border-t border-gray-200 dark:border-gray-700 mt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+          <div class="mb-4 md:mb-0">
+            <p class="text-gray-600 dark:text-gray-300 text-sm">
+              &copy; {new Date().getFullYear()} Avalon Roads - Todos os direitos reservados
+            </p>
+          </div>
+          <div class="text-gray-500 dark:text-gray-400 text-sm">
+            <p>Desenvolvido por 
+              <a href="https://github.com/Br3n0k" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                Brendown Ferreira
+              </a>
+            </p>
+            <p class="mt-1">
+              Parte da 
+              <a href="https://github.com/AO-Noki" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                AO-Noki
+              </a> 
+              - Organização de ferramentas para Albion Online
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --accent: 136, 58, 234;
+    --accent-light: 224, 204, 250;
+    --accent-dark: 49, 10, 101;
+    --accent-gradient: linear-gradient(
+      45deg,
+      rgb(var(--accent)),
+      rgb(var(--accent-light)) 30%,
+      white 60%
+    );
+  }
+
+  /* Loading skeleton animation */
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+
+  .loading-skeleton {
+    background: linear-gradient(
+      to right,
+      var(--tw-gradient-from) 8%,
+      var(--tw-gradient-via) 18%,
+      var(--tw-gradient-to) 33%
+    );
+    background-size: 2000px 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  /* Dark mode loading skeleton */
+  .dark .loading-skeleton {
+    --tw-gradient-from: #2d3748;
+    --tw-gradient-via: #4a5568;
+    --tw-gradient-to: #2d3748;
+  }
+
+  /* Light mode loading skeleton */
+  .light .loading-skeleton {
+    --tw-gradient-from: #f6f7f8;
+    --tw-gradient-via: #edeef1;
+    --tw-gradient-to: #f6f7f8;
+  }
+</style>
