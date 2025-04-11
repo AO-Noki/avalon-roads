@@ -110,3 +110,7 @@ Parte da organização [AO-Noki](https://github.com/AO-Noki) - Ferramentas para 
 ## Licença
 
 Este projeto está licenciado sob a Licença MIT - veja o arquivo LICENSE para detalhes.
+
+## Preview
+
+![Avalon Roads Preview](preview.png)
