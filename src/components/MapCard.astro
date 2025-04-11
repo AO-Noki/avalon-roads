@@ -30,17 +30,17 @@ const chestIcons = {
 const dungeonIcons = {
   'DUNGEON_SOLO': { 
     small: 'dungeon_solo.png', 
-    large: 'dungeon_solo_large.png', 
+    large: 'dungeon_solo.png', 
     label: 'Dungeon Solo' 
   },
   'DUNGEON_GROUP': { 
     small: 'dungeon_group.png', 
-    large: 'dungeon_group_large.png', 
+    large: 'dungeon_group.png', 
     label: 'Dungeon Grupo' 
   },
   'DUNGEON_AVALON': { 
     small: 'dungeon_avalon.png', 
-    large: 'dungeon_avalon_large.png', 
+    large: 'dungeon_avalon.png', 
     label: 'Dungeon Avalon' 
   }
 };
@@ -109,7 +109,7 @@ const getDungeonIcon = (dungeon: DungeonItem) => {
     return { iconPath: '/icons/dungeon_unknown.png', label: dungeon.type };
   }
   
-  // Usar sempre o ícone pequeno, independente do tamanho da dungeon
+  // Usar o nome correto do arquivo do ícone, sem o prefixo DUNGEON_ duplicado
   const iconPath = `/icons/${iconInfo.small}`;
   
   const sizeLabel = dungeon.size === 'large' ? 'Grande' : 'Pequeno';
@@ -127,7 +127,7 @@ const getResourceIcon = (resource: ResourceItem) => {
   }
   
   // Usar sempre o ícone pequeno, independente do tamanho do recurso
-  const iconPath = `/icons/${iconInfo.small}`;
+  const iconPath = `/icons/resource_${resource.type.toLowerCase()}.png`;
   
   // Adicionar log para debugging
   console.log(`Resource type: ${resource.type}, Path: ${iconPath}`);

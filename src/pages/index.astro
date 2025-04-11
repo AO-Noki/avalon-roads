@@ -3,46 +3,18 @@ import Layout from '../layouts/Layout.astro';
 import MapCard from '../components/MapCard.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
 import AdBanner from '../components/AdBanner.astro';
-import type { Map, ChestType, DungeonType, ResourceType, ChestItem, DungeonItem, ResourceItem } from '../types/map';
 import mapsData from '../data/maps.json';
 
-// Usar os dados reais dos mapas e converter para o tipo correto
-const maps: Map[] = mapsData.maps.map(map => ({
-  ...map,
-  chests: (map.chests || []).map(item => ({
-    type: item.type as ChestType,
-    size: item.size as 'small' | 'large',
-    count: item.count
-  })),
-  dungeons: (map.dungeons || []).map(item => ({
-    type: item.type as DungeonType,
-    size: item.size as 'small' | 'large',
-    count: item.count
-  })),
-  resources: (map.resources || []).map(item => ({
-    type: item.type as ResourceType,
-    size: item.size as 'small' | 'large',
-    count: item.count
-  }))
-}));
+// Usar os dados reais dos mapas
+const maps = mapsData.maps;
 
-// Obter todos os tipos de recursos para filtros
-const chestTypes = Array.from(new Set(
-  maps.flatMap(map => map.chests?.map(r => r.type) || [])
-)).sort() as ChestType[];
-
-const dungeonTypes = Array.from(new Set(
-  maps.flatMap(map => map.dungeons?.map(r => r.type) || [])
-)).sort() as DungeonType[];
-
-const resourceTypes = Array.from(new Set(
-  maps.flatMap(map => map.resources?.map(r => r.type) || [])
-)).sort() as ResourceType[];
-
-// Todos os tipos para filtros
-const allResourceTypes = [...chestTypes, ...dungeonTypes, ...resourceTypes];
-
-const tiers = Array.from(new Set(maps.map(map => map.tier))).sort();
+// Ordenar mapas por tier e nome
+maps.sort((a, b) => {
+  if (a.tier === b.tier) {
+    return a.name.localeCompare(b.name);
+  }
+  return a.tier - b.tier;
+});
 
 // Data da última atualização
 const lastUpdated = new Date(mapsData.lastUpdated || new Date()).toLocaleDateString('pt-BR', {
@@ -51,36 +23,475 @@ const lastUpdated = new Date(mapsData.lastUpdated || new Date()).toLocaleDateStr
   day: 'numeric'
 });
 
+// Obter todos os tipos de recursos para filtros
+const resourceTypes = Array.from(
+  new Set(
+    maps.flatMap(map => 
+      map.resources.map(r => r.type)
+    )
+  )
+).sort();
+
+// Obter todos os tipos de baús para filtros
+const chestTypes = Array.from(
+  new Set(
+    maps.flatMap(map => 
+      map.chests.map(c => c.type)
+    )
+  )
+).sort();
+
+// Obter todos os tipos de dungeons para filtros
+const dungeonTypes = Array.from(
+  new Set(
+    maps.flatMap(map => 
+      map.dungeons.map(d => d.type)
+    )
+  )
+).sort();
+
+const tiers = Array.from(new Set(maps.map(map => map.tier))).sort();
+
 // Função para obter o ícone do recurso
-const getResourceIcon = (type: string): string => {
-  switch (type) {
-    case 'BLUE': return '/icons/chest_blue.png';
-    case 'GREEN': return '/icons/chest_green.png';
-    case 'GOLD': return '/icons/chest_gold.png';
-    case 'STONE': return '/icons/resource_stone.png';
-    case 'DUNGEON_SOLO': return '/icons/dungeon_solo.png';
-    case 'DUNGEON_GROUP': return '/icons/dungeon_group.png';
-    case 'DUNGEON_AVALON': return '/icons/dungeon_avalon.png';
-    case 'WOOD': return '/icons/resource_wood.png';
-    case 'ORE': return '/icons/resource_ore.png';
-    case 'HIDE': return '/icons/resource_hide.png';
-    case 'FIBER': return '/icons/resource_fiber.png';
-    default: return '/icons/resource_unknown.png';
-  }
-};
+function getResourceIcon(type: string) {
+  return `/icons/resource_${type.toLowerCase()}.png`;
+}
+
+// Função para obter o ícone do baú
+function getChestIcon(type: string) {
+  return `/icons/chest_${type.toLowerCase()}.png`;
+}
+
+// Função para obter o ícone da dungeon
+function getDungeonIcon(type: string) {
+  // Remove o prefixo DUNGEON_ e converte para minúsculo
+  const cleanType = type.replace('DUNGEON_', '').toLowerCase();
+  return `/icons/dungeon_${cleanType}.png`;
+}
 ---
 
-<Layout title="Avalon Roads">
+<Layout title="Avalon Roads | A.O. NOKI">
+  <!-- Dados dos mapas escondidos para JavaScript -->
+  <script id="maps-data" type="application/json" set:html={JSON.stringify(maps)}>
+  </script>
+  
+  <script>
+    // Declaração de tipo para o Google AdSense
+    declare global {
+      interface Window {
+        adsbygoogle: any[];
+        openMapModal: (imageSrc: string, mapName: string) => void;
+        closeMapModal: () => void;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('Iniciando carregamento dos mapas...');
+      
+      // Obter mapas do json
+      const mapsJsonElement = document.getElementById('maps-data');
+      const mapsJsonText = mapsJsonElement ? mapsJsonElement.textContent || '[]' : '[]';
+      console.log('Tamanho dos dados JSON:', mapsJsonText.length);
+      
+      try {
+        const mapsJson = JSON.parse(mapsJsonText);
+        console.log('Total de mapas carregados:', mapsJson.length);
+        console.log('Exemplo do primeiro mapa:', mapsJson[0] ? JSON.stringify(mapsJson[0]) : 'Nenhum mapa encontrado');
+        
+        let filteredMaps = [...mapsJson];
+        let currentPage = 1;
+        const mapsPerPage = 12; // 6x4 grid na versão desktop
+        
+        // Função para renderizar elementos de mapa no DOM
+        function renderMaps() {
+          // Limpa a lista atual
+          const mapList = document.getElementById('map-list');
+          if (!mapList) return;
+          
+          // Define quais mapas mostrar com base na paginação
+          let startIndex = 0;
+          let endIndex = mapsPerPage;
+          
+          // Verifica se temos um elemento de página atual
+          const pageElement = document.getElementById('current-page');
+          if (pageElement) {
+            const currentPage = parseInt(pageElement.textContent || '1', 10);
+            startIndex = (currentPage - 1) * mapsPerPage;
+            endIndex = startIndex + mapsPerPage;
+          }
+          
+          const mapsToShow = filteredMaps.slice(startIndex, endIndex);
+          
+          // Atualiza o contador de total de mapas no cabeçalho
+          const totalMapsElement = document.getElementById('total-maps');
+          if (totalMapsElement) {
+            totalMapsElement.textContent = String(filteredMaps.length);
+          }
+          
+          // Atualiza o total de páginas
+          const totalPagesElement = document.getElementById('total-pages');
+          if (totalPagesElement) {
+            const totalPages = Math.ceil(filteredMaps.length / mapsPerPage);
+            totalPagesElement.textContent = String(totalPages);
+          }
+          
+          // Limpa a lista atual
+          mapList.innerHTML = '';
+          
+          // Adiciona os mapas à página
+          mapsToShow.forEach((map, index) => {
+            const mapWrapper = document.createElement('div');
+            mapWrapper.classList.add('map-wrapper');
+            mapWrapper.dataset.map = JSON.stringify(map);
+            
+            // Insere o conteúdo do MapCard
+            mapWrapper.innerHTML = `
+              <div class="block bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden h-full">
+                <div class="p-4 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700">
+                  <div class="flex justify-between items-center">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${map.name}</h3>
+                    <div class="bg-gray-900/70 text-white text-xs font-bold px-2 py-1 rounded">
+                      T${map.tier}
+                    </div>
+                  </div>
+                </div>
+                <div class="p-5">
+                  <div class="flex flex-wrap gap-2 mt-3 mb-4">
+                    ${map.chests?.map(chest => `
+                      <div class="relative group">
+                        <div class="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-full">
+                          <img src="/icons/chest_${chest.type.toLowerCase()}.png" alt="${chest.type} Chest" class="w-5 h-5">
+                        </div>
+                        <div class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                          ${chest.count}
+                        </div>
+                        <div class="tooltip opacity-0 bg-gray-900 text-white text-xs rounded py-1 px-2 absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none transition-opacity group-hover:opacity-100 z-10 whitespace-nowrap">
+                          Baú ${chest.type} (${chest.count})
+                        </div>
+                      </div>
+                    `).join('')}
+                    
+                    ${map.resources?.map(resource => `
+                      <div class="relative group">
+                        <div class="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-full">
+                          <img src="/icons/resource_${resource.type.toLowerCase()}.png" alt="${resource.type}" class="w-5 h-5">
+                        </div>
+                        <div class="absolute -top-1 -right-1 bg-green-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                          ${resource.count}
+                        </div>
+                        <div class="tooltip opacity-0 bg-gray-900 text-white text-xs rounded py-1 px-2 absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none transition-opacity group-hover:opacity-100 z-10 whitespace-nowrap">
+                          ${resource.type} (${resource.count})
+                        </div>
+                      </div>
+                    `).join('')}
+                    
+                    ${map.dungeons?.map(dungeon => `
+                      <div class="relative group">
+                        <div class="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-full">
+                          <img src="/icons/dungeon_${dungeon.type.replace('DUNGEON_', '').toLowerCase()}.png" alt="${dungeon.type}" class="w-5 h-5">
+                        </div>
+                        <div class="absolute -top-1 -right-1 bg-purple-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                          ${dungeon.count}
+                        </div>
+                        <div class="tooltip opacity-0 bg-gray-900 text-white text-xs rounded py-1 px-2 absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none transition-opacity group-hover:opacity-100 z-10 whitespace-nowrap">
+                          Dungeon ${dungeon.type.replace('DUNGEON_', '')} (${dungeon.count})
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                  <button 
+                    class="w-full mt-4 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2 font-medium shadow-sm"
+                    data-map-image="/maps/${map.image}"
+                    data-map-name="${map.name}"
+                    onclick="openMapModal(this.getAttribute('data-map-image'), this.getAttribute('data-map-name'))"
+                  >
+                    <i class="fas fa-map-marked-alt"></i>
+                    Ver Mapa
+                  </button>
+                </div>
+              </div>
+            `;
+            
+            mapList.appendChild(mapWrapper);
+          });
+          
+          // Atualiza indicadores
+          const noResultsElement = document.getElementById('no-results');
+          if (noResultsElement) {
+            noResultsElement.classList.toggle('hidden', filteredMaps.length > 0);
+          }
+          if (mapList) {
+            mapList.classList.toggle('hidden', filteredMaps.length === 0);
+          }
+          
+          // Atualiza estados dos botões de paginação
+          const prevButton = document.getElementById('prev-page') as HTMLButtonElement | null;
+          const nextButton = document.getElementById('next-page') as HTMLButtonElement | null;
+          
+          if (prevButton && nextButton && pageElement) {
+            const currentPage = parseInt(pageElement.textContent || '1', 10);
+            const totalPages = Math.ceil(filteredMaps.length / mapsPerPage);
+            
+            prevButton.disabled = currentPage <= 1;
+            nextButton.disabled = currentPage >= totalPages;
+          }
+        }
+        
+        // Configuração dos filtros
+        setupFilters();
+        setupPagination();
+        renderMaps();
+      
+        function setupFilters() {
+          // Filtro por tier
+          const tierFilters = document.querySelectorAll<HTMLElement>('.tier-filter');
+          tierFilters.forEach(filter => {
+            filter.addEventListener('click', (e: MouseEvent) => {
+              e.preventDefault();
+              const target = e.currentTarget as HTMLElement;
+              const tier = parseInt(target.getAttribute('data-tier') || '0', 10);
+              
+              // Reset da classe ativa
+              tierFilters.forEach(f => f.classList.remove('active'));
+              target.classList.add('active');
+              
+              if (tier === 0) {
+                // Mostrar todos os tiers
+                filteredMaps = [...mapsJson];
+              } else {
+                // Filtrar por tier específico
+                filteredMaps = mapsJson.filter(map => map.tier === tier);
+              }
+              
+              currentPage = 1;
+              renderMaps();
+              updatePagination();
+            });
+          });
+          
+          // Busca por nome
+          const searchInput = document.getElementById('map-search') as HTMLInputElement;
+          if (searchInput) {
+            searchInput.addEventListener('input', (e: Event) => {
+              const target = e.currentTarget as HTMLInputElement;
+              const searchTerm = target.value.toLowerCase().trim();
+              
+              if (searchTerm === '') {
+                // Se a busca estiver vazia, volta para os mapas filtrados por tier
+                const activeTier = document.querySelector<HTMLElement>('.tier-filter.active');
+                const tier = activeTier ? parseInt(activeTier.getAttribute('data-tier') || '0', 10) : 0;
+                
+                if (tier === 0) {
+                  filteredMaps = [...mapsJson];
+                } else {
+                  filteredMaps = mapsJson.filter(map => map.tier === tier);
+                }
+              } else {
+                // Filtra por nome dentro dos filtros atuais
+                const activeTier = document.querySelector<HTMLElement>('.tier-filter.active');
+                const tier = activeTier ? parseInt(activeTier.getAttribute('data-tier') || '0', 10) : 0;
+                
+                // Base da filtragem por tier
+                let baseFilter = tier === 0 ? mapsJson : mapsJson.filter(map => map.tier === tier);
+                
+                filteredMaps = baseFilter.filter(map => {
+                  // Verificar nome do mapa completo
+                  const fullNameMatch = map.name.toLowerCase().includes(searchTerm);
+                  
+                  // Verificar iniciais/partes do nome com hífen
+                  let initialsMatch = false;
+                  
+                  // Verifica se a busca contém hífen para pesquisa de iniciais
+                  if (searchTerm.includes('-')) {
+                    try {
+                      // Extrai as partes da pesquisa (ex: "c-u" => ["c", "u"])
+                      const searchParts = searchTerm.split('-').map(part => part.trim()).filter(Boolean);
+                      
+                      // Extrai as partes do nome do mapa (ex: "Cases-Ugumlos" => ["Cases", "Ugumlos"])
+                      const nameParts = map.name.split('-').map(part => part.trim()).filter(Boolean);
+                      
+                      // Verifica se o número de partes da busca é menor ou igual ao do nome do mapa
+                      if (searchParts.length <= nameParts.length) {
+                        // Verifica se cada parte da busca corresponde ao início da parte correspondente do nome
+                        initialsMatch = searchParts.every((searchPart, index) => {
+                          if (index < nameParts.length) {
+                            const namePart = nameParts[index].toLowerCase();
+                            return namePart.startsWith(searchPart);
+                          }
+                          return false;
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Erro ao processar busca por iniciais:", error);
+                      initialsMatch = false;
+                    }
+                  } else if (searchTerm.length <= 2) {
+                    // Para buscas curtas (1-2 caracteres), verifica se é uma inicial
+                    const nameParts = map.name.split('-').map(part => part.trim()).filter(Boolean);
+                    initialsMatch = nameParts.some(part => part.toLowerCase().startsWith(searchTerm));
+                  }
+                  
+                  return fullNameMatch || initialsMatch;
+                });
+              }
+              
+              currentPage = 1;
+              renderMaps();
+              updatePagination();
+            });
+          }
+        }
+        
+        function setupPagination() {
+          const prevButton = document.getElementById('prev-page');
+          const nextButton = document.getElementById('next-page');
+          
+          if (prevButton) {
+            prevButton.addEventListener('click', (e) => {
+              e.preventDefault();
+              const currentPageElement = document.getElementById('current-page');
+              if (currentPageElement) {
+                const currentPage = parseInt(currentPageElement.textContent || '1', 10);
+                if (currentPage > 1) {
+                  currentPageElement.textContent = String(currentPage - 1);
+                  renderMaps();
+                }
+              }
+            });
+          }
+          
+          if (nextButton) {
+            nextButton.addEventListener('click', (e) => {
+              e.preventDefault();
+              const currentPageElement = document.getElementById('current-page');
+              const totalPagesElement = document.getElementById('total-pages');
+              if (currentPageElement && totalPagesElement) {
+                const currentPage = parseInt(currentPageElement.textContent || '1', 10);
+                const totalPages = parseInt(totalPagesElement.textContent || '1', 10);
+                if (currentPage < totalPages) {
+                  currentPageElement.textContent = String(currentPage + 1);
+                  renderMaps();
+                }
+              }
+            });
+          }
+        }
+        
+        function updatePagination() {
+          const totalPages = Math.ceil(filteredMaps.length / mapsPerPage);
+          const currentPageElement = document.getElementById('current-page');
+          const totalPagesElement = document.getElementById('total-pages');
+          const prevButton = document.getElementById('prev-page') as HTMLButtonElement;
+          const nextButton = document.getElementById('next-page') as HTMLButtonElement;
+          
+          if (currentPageElement) {
+            currentPageElement.textContent = String(currentPage);
+          }
+          
+          if (totalPagesElement) {
+            totalPagesElement.textContent = String(totalPages);
+          }
+          
+          // Atualiza estados dos botões
+          if (prevButton) {
+            prevButton.disabled = currentPage <= 1;
+          }
+          
+          if (nextButton) {
+            nextButton.disabled = currentPage >= totalPages;
+          }
+          
+          // Atualiza contador de total de mapas no cabeçalho
+          const totalMapsElement = document.getElementById('total-maps');
+          if (totalMapsElement) {
+            totalMapsElement.textContent = String(filteredMaps.length);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar mapas:', error);
+        const mapListElement = document.getElementById('map-list');
+        if (mapListElement) {
+          mapListElement.innerHTML = `
+            <div class="col-span-full text-center p-8 bg-red-100 dark:bg-red-900/30 rounded-lg">
+              <h3 class="text-xl font-semibold mb-2">Erro ao carregar mapas</h3>
+              <p>${error.message}</p>
+            </div>
+          `;
+        }
+      }
+      
+      // Adiciona o modal para visualizar imagens dos mapas
+      if (!document.getElementById('map-modal')) {
+        const mapModal = document.createElement('div');
+        mapModal.id = 'map-modal';
+        mapModal.className = 'fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4 hidden';
+        mapModal.innerHTML = `
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+              <h3 class="text-xl font-semibold text-gray-900 dark:text-white" id="modal-title"></h3>
+              <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onclick="closeMapModal()">
+                <i class="fas fa-times text-xl"></i>
+              </button>
+            </div>
+            <div class="p-4 overflow-auto">
+              <img id="modal-image" src="" alt="" class="w-full object-contain">
+            </div>
+          </div>
+        `;
+        document.body.appendChild(mapModal);
+      }
+      
+      // Adiciona funções globais para abrir e fechar o modal
+      window.openMapModal = function(imageSrc, mapName) {
+        const modal = document.getElementById('map-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalImage = document.getElementById('modal-image') as HTMLImageElement;
+        
+        if (modal && modalTitle && modalImage) {
+          modalTitle.textContent = mapName || 'Visualização do Mapa';
+          modalImage.src = imageSrc;
+          modal.classList.remove('hidden');
+          
+          // Previne o scroll da página quando o modal está aberto
+          document.body.style.overflow = 'hidden';
+        }
+      };
+      
+      window.closeMapModal = function() {
+        const modal = document.getElementById('map-modal');
+        if (modal) {
+          modal.classList.add('hidden');
+          document.body.style.overflow = '';
+        }
+      };
+      
+      // Fechar o modal quando clicar fora da caixa de diálogo
+      document.addEventListener('click', function(event) {
+        const modal = document.getElementById('map-modal');
+        if (modal && !modal.classList.contains('hidden') && event.target === modal) {
+          window.closeMapModal();
+        }
+      });
+      
+      // Fechar o modal com a tecla ESC
+      document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+          window.closeMapModal();
+        }
+      });
+    });
+  </script>
+
   <header class="bg-gradient-to-b from-indigo-700 to-indigo-900 dark:from-indigo-900 dark:to-indigo-950">
     <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center mb-6">
         <div>
           <h1 class="text-4xl font-bold text-white mb-2 flex items-center">
             <i class="fas fa-map-marked-alt mr-3 text-indigo-300"></i>
-            Avalon Roads
+            Avalon Roads | <a href="https://github.com/AO-NOKI" target="_blank" class="text-indigo-100 hover:text-indigo-200">A.O. NOKI</a>
           </h1>
           <p class="text-indigo-100 text-lg">
-            Explore <span id="total-maps" class="font-semibold">{maps.length}</span> mapas únicos do Avalon
+            Explore o conteúdo de <span id="total-maps" class="font-semibold">{maps.length}</span> mapas das estradas avalonianas de Albion Online.
           </p>
           <p class="text-indigo-300 text-sm mt-1 flex items-center">
             <i class="fas fa-clock mr-2"></i>
@@ -91,11 +502,6 @@ const getResourceIcon = (type: string): string => {
       </div>
     </div>
   </header>
-
-  <!-- Banner de anúncio horizontal abaixo do cabeçalho -->
-  <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 mt-6">
-    <AdBanner format="horizontal" id="ad-header" adSlot="1234567890" />
-  </div>
 
   <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 mb-8 mt-5">
@@ -108,7 +514,7 @@ const getResourceIcon = (type: string): string => {
           </div>
           <input 
             type="text" 
-            id="search" 
+            id="map-search" 
             placeholder="Buscar mapas... (Ctrl + K)" 
             class="w-full px-4 py-3.5 pl-11 bg-gray-50 dark:bg-gray-700/50 border-0 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 shadow-sm"
           />
@@ -157,33 +563,112 @@ const getResourceIcon = (type: string): string => {
       </div>
 
       <!-- Resource Filters - Melhorados -->
-      <div class="flex flex-wrap gap-2 p-2 bg-gray-50 dark:bg-gray-700/30 rounded-xl" id="resource-filters">
-        {allResourceTypes.map(type => (
-          <button 
-            class="resource-filter px-3 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 shadow-sm" 
-            data-resource={type}
-          >
-            <div class="w-6 h-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-1 transition-transform flex items-center justify-center">
-              <img 
-                src={getResourceIcon(type)} 
-                alt={type} 
-                class="w-full h-full object-contain"
-                loading="lazy"
-              />
-            </div>
-            <span class="font-medium">{type}</span>
+      <div class="flex flex-col gap-4 p-2 bg-gray-50 dark:bg-gray-700/30 rounded-xl">
+        <!-- Filtros de Recursos -->
+        <div>
+          <h3 class="text-sm font-semibold mb-2 px-2 text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <i class="fas fa-tree text-green-600 dark:text-green-400"></i>
+            Recursos
+          </h3>
+          <div class="flex flex-wrap gap-2" id="resource-filters">
+            {resourceTypes.map(type => (
+              <button 
+                class="resource-filter px-3 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 shadow-sm" 
+                data-resource={type}
+              >
+                <div class="w-6 h-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-1 transition-transform flex items-center justify-center">
+                  <img 
+                    src={getResourceIcon(type)} 
+                    alt={type} 
+                    class="w-full h-full object-contain"
+                    loading="lazy"
+                  />
+                </div>
+                <span class="font-medium">{type}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <!-- Filtros de Baús -->
+        <div>
+          <h3 class="text-sm font-semibold mb-2 px-2 text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <i class="fas fa-box-open text-blue-600 dark:text-blue-400"></i>
+            Baús
+          </h3>
+          <div class="flex flex-wrap gap-2" id="chest-filters">
+            {chestTypes.map(type => (
+              <button 
+                class="chest-filter px-3 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 shadow-sm" 
+                data-chest-type={type}
+              >
+                <div class="w-6 h-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-1 transition-transform flex items-center justify-center">
+                  <img 
+                    src={getChestIcon(type)} 
+                    alt={type} 
+                    class="w-full h-full object-contain"
+                    loading="lazy"
+                  />
+                </div>
+                <span class="font-medium">{type}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <!-- Filtros de Dungeons -->
+        <div>
+          <h3 class="text-sm font-semibold mb-2 px-2 text-gray-700 dark:text-gray-300 flex items-center gap-2">
+            <i class="fas fa-dungeon text-purple-600 dark:text-purple-400"></i>
+            Dungeons
+          </h3>
+          <div class="flex flex-wrap gap-2" id="dungeon-filters">
+            {dungeonTypes.map(type => (
+              <button 
+                class="dungeon-filter px-3 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:border-purple-300 dark:hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 shadow-sm" 
+                data-dungeon-type={type}
+              >
+                <div class="w-6 h-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-1 transition-transform flex items-center justify-center">
+                  <img 
+                    src={getDungeonIcon(type)} 
+                    alt={type} 
+                    class="w-full h-full object-contain"
+                    loading="lazy"
+                  />
+                </div>
+                <span class="font-medium">{type.replace('DUNGEON_', '')}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filtros adicionais -->
+    <div class="mt-4 mb-6">
+      <div class="flex justify-end items-center">
+        <!-- Paginação -->
+        <div class="flex items-center gap-2" id="pagination">
+          <button id="prev-page" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+            &lt;
           </button>
-        ))}
+          <span class="text-sm">
+            <span id="current-page">1</span> / <span id="total-pages">{Math.ceil(maps.length / 12)}</span>
+          </span>
+          <button id="next-page" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+            &gt;
+          </button>
+        </div>
       </div>
     </div>
 
     <!-- Layout com anúncios -->
-    <div class="flex flex-col lg:flex-row gap-6">
+    <div class="flex flex-col gap-6">
       <!-- Conteúdo principal (mapas) -->
-      <div class="flex-grow">
+      <div class="w-full">
         <!-- Loading State -->
-        <div id="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {Array(6).fill(0).map(() => (
+        <div id="loading" class="grid gap-6" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+          {Array(8).fill(0).map(() => (
             <div class="map-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg overflow-hidden">
               <div class="flex justify-between items-start mb-3">
                 <div class="loading-skeleton h-6 w-32 rounded"></div>
@@ -200,21 +685,8 @@ const getResourceIcon = (type: string): string => {
         </div>
 
         <!-- Map List -->
-        <div id="map-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {maps.map((map, index) => (
-            <>
-              <div data-map={JSON.stringify(map)} class="map-wrapper">
-                <MapCard map={map} />
-              </div>
-              
-              {/* Adicionar anúncio a cada 6 mapas na versão mobile */}
-              {index > 0 && (index + 1) % 6 === 0 && (
-                <div class="col-span-1 sm:col-span-2 lg:hidden my-2">
-                  <AdBanner format="rectangle" id={`ad-in-feed-${Math.floor(index/6)}`} adSlot="6677889900" />
-                </div>
-              )}
-            </>
-          ))}
+        <div id="map-list" class="grid gap-6 w-full" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+          <!-- Os mapas serão inseridos aqui via JavaScript -->
         </div>
 
         <!-- No Results -->
@@ -228,18 +700,15 @@ const getResourceIcon = (type: string): string => {
           </div>
         </div>
       </div>
-
-      <!-- Anúncios na barra lateral (visível apenas em telas grandes) -->
-      <div class="hidden lg:block lg:w-[300px] space-y-6 self-start sticky top-6">
-        <AdBanner format="sidebar" id="ad-sidebar" adSlot="0987654321" />
-        
-        <!-- Segundo anúncio retangular para melhor monetização -->
-        <AdBanner format="rectangle" id="ad-rectangle" className="mt-8" adSlot="1122334455" />
-      </div>
     </div>
     
-    <!-- Anúncio horizontal para dispositivos móveis (visível apenas em telas pequenas) -->
-    <div class="lg:hidden mt-10">
+    <!-- Banner de anúncios após os mapas -->
+    <div class="mt-10">
+      <AdBanner format="horizontal" id="ad-header" adSlot="1234567890" />
+    </div>
+    
+    <!-- Anúncio horizontal para todos os dispositivos -->
+    <div class="mt-8">
       <AdBanner format="rectangle" id="ad-mobile" adSlot="5566778899" />
     </div>
   </main>
@@ -248,12 +717,21 @@ const getResourceIcon = (type: string): string => {
 <script>
   import type { Map, ChestType, DungeonType, ResourceType } from '../types/map';
   
+  // Declaração de tipo para o Google AdSense
+  declare global {
+    interface Window {
+      adsbygoogle: any[];
+    }
+  }
+  
   // State
   let maps: Map[] = [];
   let filteredMaps: Map[] = [];
   let currentSort = { field: 'name', ascending: true };
   let activeFilters = {
     resources: new Set<string>(),
+    chests: new Set<string>(),
+    dungeons: new Set<string>(),
     tier: ''
   };
 
@@ -261,11 +739,13 @@ const getResourceIcon = (type: string): string => {
   const mapList = document.getElementById('map-list')!;
   const loadingElement = document.getElementById('loading')!;
   const noResultsElement = document.getElementById('no-results')!;
-  const searchInput = document.getElementById('search') as HTMLInputElement;
+  const searchInput = document.getElementById('map-search') as HTMLInputElement;
   const tierFilter = document.getElementById('tier-filter') as HTMLSelectElement;
   const sortNameButton = document.getElementById('sort-name')!;
   const sortTierButton = document.getElementById('sort-tier')!;
-  const resourceFilters = document.querySelectorAll('.resource-filter');
+  const resourceFilters = document.querySelectorAll<HTMLElement>('.resource-filter');
+  const chestFilters = document.querySelectorAll<HTMLElement>('.chest-filter');
+  const dungeonFilters = document.querySelectorAll<HTMLElement>('.dungeon-filter');
   const totalMapsElement = document.getElementById('total-maps')!;
 
   // Functions
@@ -276,10 +756,17 @@ const getResourceIcon = (type: string): string => {
 
   // Função auxiliar para verificar se um mapa contém um tipo de recurso
   const mapHasResourceType = (map: Map, resourceType: string): boolean => {
-    const hasInChests = map.chests?.some(item => item.type === resourceType) || false;
-    const hasInDungeons = map.dungeons?.some(item => item.type === resourceType) || false;
-    const hasInResources = map.resources?.some(item => item.type === resourceType) || false;
-    return hasInChests || hasInDungeons || hasInResources;
+    return map.resources?.some(item => item.type === resourceType) || false;
+  };
+
+  // Função auxiliar para verificar se um mapa contém um tipo de baú
+  const mapHasChestType = (map: Map, chestType: string): boolean => {
+    return map.chests?.some(item => item.type === chestType) || false;
+  };
+
+  // Função auxiliar para verificar se um mapa contém um tipo de dungeon
+  const mapHasDungeonType = (map: Map, dungeonType: string): boolean => {
+    return map.dungeons?.some(item => item.type === dungeonType) || false;
   };
 
   const updateResourceCounts = () => {
@@ -287,16 +774,6 @@ const getResourceIcon = (type: string): string => {
     
     // Contar todos os tipos de recursos nos mapas filtrados
     filteredMaps.forEach(map => {
-      // Contar baús
-      map.chests?.forEach(chest => {
-        counts[chest.type] = (counts[chest.type] || 0) + 1;
-      });
-      
-      // Contar dungeons
-      map.dungeons?.forEach(dungeon => {
-        counts[dungeon.type] = (counts[dungeon.type] || 0) + 1;
-      });
-      
       // Contar recursos
       map.resources?.forEach(resource => {
         counts[resource.type] = (counts[resource.type] || 0) + 1;
@@ -311,30 +788,215 @@ const getResourceIcon = (type: string): string => {
       }
       
       // Update active state
-      button.classList.toggle('bg-gray-100', activeFilters.resources.has(resource));
-      button.classList.toggle('dark:bg-gray-700', activeFilters.resources.has(resource));
+      button.classList.toggle('bg-green-50', activeFilters.resources.has(resource));
+      button.classList.toggle('dark:bg-green-900/30', activeFilters.resources.has(resource));
+      button.classList.toggle('border-green-300', activeFilters.resources.has(resource));
+      button.classList.toggle('dark:border-green-500', activeFilters.resources.has(resource));
     });
 
+    // Atualiza contador de total de mapas no cabeçalho
     totalMapsElement.textContent = String(filteredMaps.length);
   };
 
-  const renderMaps = () => {
-    const mapElements = document.querySelectorAll('[data-map]');
-    mapElements.forEach(el => {
-      const map = JSON.parse(el.getAttribute('data-map')!);
-      const isVisible = filteredMaps.some(m => m.id === map.id);
-      el.classList.toggle('hidden', !isVisible);
+  const updateChestCounts = () => {
+    const counts: Record<string, number> = {};
+    
+    // Contar todos os tipos de baús nos mapas filtrados
+    filteredMaps.forEach(map => {
+      map.chests?.forEach(chest => {
+        counts[chest.type] = (counts[chest.type] || 0) + 1;
+      });
     });
+
+    chestFilters.forEach(button => {
+      const chestType = button.getAttribute('data-chest-type')!;
+      const countElement = button.querySelector('.chest-count');
+      if (countElement) {
+        countElement.textContent = String(counts[chestType] || 0);
+      }
+      
+      // Update active state
+      button.classList.toggle('bg-blue-50', activeFilters.chests.has(chestType));
+      button.classList.toggle('dark:bg-blue-900/30', activeFilters.chests.has(chestType));
+      button.classList.toggle('border-blue-300', activeFilters.chests.has(chestType));
+      button.classList.toggle('dark:border-blue-500', activeFilters.chests.has(chestType));
+    });
+  };
+
+  const updateDungeonCounts = () => {
+    const counts: Record<string, number> = {};
+    
+    // Contar todos os tipos de dungeons nos mapas filtrados
+    filteredMaps.forEach(map => {
+      map.dungeons?.forEach(dungeon => {
+        counts[dungeon.type] = (counts[dungeon.type] || 0) + 1;
+      });
+    });
+
+    dungeonFilters.forEach(button => {
+      const dungeonType = button.getAttribute('data-dungeon-type')!;
+      const countElement = button.querySelector('.dungeon-count');
+      if (countElement) {
+        countElement.textContent = String(counts[dungeonType] || 0);
+      }
+      
+      // Update active state
+      button.classList.toggle('bg-purple-50', activeFilters.dungeons.has(dungeonType));
+      button.classList.toggle('dark:bg-purple-900/30', activeFilters.dungeons.has(dungeonType));
+      button.classList.toggle('border-purple-300', activeFilters.dungeons.has(dungeonType));
+      button.classList.toggle('dark:border-purple-500', activeFilters.dungeons.has(dungeonType));
+    });
+  };
+
+  const updateAllCounts = () => {
+    updateResourceCounts();
+    updateChestCounts();
+    updateDungeonCounts();
+  };
+
+  const renderMaps = () => {
+    // Limpa a lista atual
+    const mapList = document.getElementById('map-list');
+    if (!mapList) return;
+    
+    // Define quais mapas mostrar com base na paginação
+    const mapsPerPage = 12;
+    let startIndex = 0;
+    let endIndex = mapsPerPage;
+    
+    // Verifica se temos um elemento de página atual
+    const pageElement = document.getElementById('current-page');
+    if (pageElement) {
+      const currentPage = parseInt(pageElement.textContent || '1', 10);
+      startIndex = (currentPage - 1) * mapsPerPage;
+      endIndex = startIndex + mapsPerPage;
+    }
+    
+    const mapsToShow = filteredMaps.slice(startIndex, endIndex);
+    
+    // Atualiza o contador de total de mapas no cabeçalho
+    const totalMapsElement = document.getElementById('total-maps');
+    if (totalMapsElement) {
+      totalMapsElement.textContent = String(filteredMaps.length);
+    }
+    
+    // Atualiza o total de páginas
+    const totalPagesElement = document.getElementById('total-pages');
+    if (totalPagesElement) {
+      const totalPages = Math.ceil(filteredMaps.length / mapsPerPage);
+      totalPagesElement.textContent = String(totalPages);
+    }
+    
+    // Limpa a lista atual
+    mapList.innerHTML = '';
+    
+    // Adiciona os mapas à página
+    mapsToShow.forEach((map, index) => {
+      const mapWrapper = document.createElement('div');
+      mapWrapper.classList.add('map-wrapper');
+      mapWrapper.dataset.map = JSON.stringify(map);
+      
+      // Insere o conteúdo do MapCard
+      mapWrapper.innerHTML = `
+        <div class="block bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden h-full">
+          <div class="p-4 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex justify-between items-center">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${map.name}</h3>
+              <div class="bg-gray-900/70 text-white text-xs font-bold px-2 py-1 rounded">
+                T${map.tier}
+              </div>
+            </div>
+          </div>
+          <div class="p-5">
+            <div class="flex flex-wrap gap-2 mt-3 mb-4">
+              ${map.chests?.map(chest => `
+                <div class="relative group">
+                  <div class="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-full">
+                    <img src="/icons/chest_${chest.type.toLowerCase()}.png" alt="${chest.type} Chest" class="w-5 h-5">
+                  </div>
+                  <div class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                    ${chest.count}
+                  </div>
+                  <div class="tooltip opacity-0 bg-gray-900 text-white text-xs rounded py-1 px-2 absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none transition-opacity group-hover:opacity-100 z-10 whitespace-nowrap">
+                    Baú ${chest.type} (${chest.count})
+                  </div>
+                </div>
+              `).join('')}
+              
+              ${map.resources?.map(resource => `
+                <div class="relative group">
+                  <div class="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-full">
+                    <img src="/icons/resource_${resource.type.toLowerCase()}.png" alt="${resource.type}" class="w-5 h-5">
+                  </div>
+                  <div class="absolute -top-1 -right-1 bg-green-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                    ${resource.count}
+                  </div>
+                  <div class="tooltip opacity-0 bg-gray-900 text-white text-xs rounded py-1 px-2 absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none transition-opacity group-hover:opacity-100 z-10 whitespace-nowrap">
+                    ${resource.type} (${resource.count})
+                  </div>
+                </div>
+              `).join('')}
+              
+              ${map.dungeons?.map(dungeon => `
+                <div class="relative group">
+                  <div class="w-8 h-8 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-full">
+                    <img src="/icons/dungeon_${dungeon.type.replace('DUNGEON_', '').toLowerCase()}.png" alt="${dungeon.type}" class="w-5 h-5">
+                  </div>
+                  <div class="absolute -top-1 -right-1 bg-purple-500 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full">
+                    ${dungeon.count}
+                  </div>
+                  <div class="tooltip opacity-0 bg-gray-900 text-white text-xs rounded py-1 px-2 absolute -top-8 left-1/2 transform -translate-x-1/2 pointer-events-none transition-opacity group-hover:opacity-100 z-10 whitespace-nowrap">
+                    Dungeon ${dungeon.type.replace('DUNGEON_', '')} (${dungeon.count})
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+            <button 
+              class="w-full mt-4 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2 font-medium shadow-sm"
+              data-map-image="/maps/${map.image}"
+              data-map-name="${map.name}"
+              onclick="openMapModal(this.getAttribute('data-map-image'), this.getAttribute('data-map-name'))"
+            >
+              <i class="fas fa-map-marked-alt"></i>
+              Ver Mapa
+            </button>
+          </div>
+        </div>
+      `;
+      
+      mapList.appendChild(mapWrapper);
+    });
+    
+    // Atualiza indicadores
+    const noResultsElement = document.getElementById('no-results');
+    if (noResultsElement) {
+      noResultsElement.classList.toggle('hidden', filteredMaps.length > 0);
+    }
+    if (mapList) {
+      mapList.classList.toggle('hidden', filteredMaps.length === 0);
+    }
+    
+    // Atualiza estados dos botões de paginação
+    const prevButton = document.getElementById('prev-page') as HTMLButtonElement | null;
+    const nextButton = document.getElementById('next-page') as HTMLButtonElement | null;
+    
+    if (prevButton && nextButton && pageElement) {
+      const currentPage = parseInt(pageElement.textContent || '1', 10);
+      const totalPages = Math.ceil(filteredMaps.length / mapsPerPage);
+      
+      prevButton.disabled = currentPage <= 1;
+      nextButton.disabled = currentPage >= totalPages;
+    }
   };
 
   const filterMaps = () => {
     let filtered = [...maps];
-
+    
     // Apply tier filter
     if (activeFilters.tier) {
       filtered = filtered.filter(map => map.tier === parseInt(activeFilters.tier));
     }
-
+    
     // Apply resource filters
     if (activeFilters.resources.size > 0) {
       filtered = filtered.filter(map => 
@@ -343,7 +1005,25 @@ const getResourceIcon = (type: string): string => {
         )
       );
     }
-
+    
+    // Apply chest filters
+    if (activeFilters.chests.size > 0) {
+      filtered = filtered.filter(map => 
+        Array.from(activeFilters.chests).some(chestType => 
+          mapHasChestType(map, chestType)
+        )
+      );
+    }
+    
+    // Apply dungeon filters
+    if (activeFilters.dungeons.size > 0) {
+      filtered = filtered.filter(map => 
+        Array.from(activeFilters.dungeons).some(dungeonType => 
+          mapHasDungeonType(map, dungeonType)
+        )
+      );
+    }
+    
     // Apply search filter
     const searchTerm = searchInput.value.trim().toLowerCase();
     if (searchTerm) {
@@ -359,33 +1039,50 @@ const getResourceIcon = (type: string): string => {
         
         // Verificar iniciais/partes do nome com hífen
         let initialsMatch = false;
+        
+        
+        // Verifica se a busca contém hífen para pesquisa de iniciais
         if (searchTerm.includes('-')) {
-          // Extrai as partes da pesquisa (ex: "c-u" => ["c", "u"])
-          const searchParts = searchTerm.split('-').map(part => part.trim()).filter(Boolean);
-          
-          // Extrai as partes do nome do mapa (ex: "Cases-Ugumlos" => ["Cases", "Ugumlos"])
-          const nameParts = map.name.split('-').map(part => part.trim()).filter(Boolean);
-          
-          // Verifica se o número de partes é o mesmo e se cada parte começa com a inicial correspondente
-          if (searchParts.length <= nameParts.length) {
-            initialsMatch = searchParts.every((searchPart, index) => {
-              // Verifica se a parte do nome começa com o termo de busca ou se a inicial coincide
-              const namePart = nameParts[index].toLowerCase();
-              return namePart.startsWith(searchPart);
-            });
+          try {
+            // Extrai as partes da pesquisa (ex: "c-u" => ["c", "u"])
+            const searchParts = searchTerm.split('-').map(part => part.trim()).filter(Boolean);
+            
+            // Extrai as partes do nome do mapa (ex: "Cases-Ugumlos" => ["Cases", "Ugumlos"])
+            const nameParts = map.name.split('-').map(part => part.trim()).filter(Boolean);
+            
+            // Verifica se o número de partes da busca é menor ou igual ao do nome do mapa
+            if (searchParts.length <= nameParts.length) {
+              // Verifica se cada parte da busca corresponde ao início da parte correspondente do nome
+              initialsMatch = searchParts.every((searchPart, index) => {
+                if (index < nameParts.length) {
+                  const namePart = nameParts[index].toLowerCase();
+                  return namePart.startsWith(searchPart);
+                }
+                return false;
+              });
+            }
+          } catch (error) {
+            console.error("Erro ao processar busca por iniciais:", error);
+            initialsMatch = false;
           }
+        } else if (searchTerm.length <= 2) {
+          // Para buscas curtas (1-2 caracteres), verifica se é uma inicial
+          const nameParts = map.name.split('-').map(part => part.trim()).filter(Boolean);
+          initialsMatch = nameParts.some(part => part.toLowerCase().startsWith(searchTerm));
         }
         
         return fullNameMatch || resourceMatch || initialsMatch;
       });
     }
-
+    
     filteredMaps = filtered;
+    
+    // Exibir estado sem resultados se necessário
     noResultsElement.classList.toggle('hidden', filteredMaps.length > 0);
     mapList.classList.toggle('hidden', filteredMaps.length === 0);
-
-    updateResourceCounts();
+    
     renderMaps();
+    updateAllCounts();
   };
 
   const updateSortButtons = () => {
@@ -446,8 +1143,9 @@ const getResourceIcon = (type: string): string => {
   sortNameButton.addEventListener('click', () => sortMaps('name'));
   sortTierButton.addEventListener('click', () => sortMaps('tier'));
   searchInput.addEventListener('input', filterMaps);
-  tierFilter.addEventListener('change', (e) => {
-    activeFilters.tier = (e.target as HTMLSelectElement).value;
+  tierFilter.addEventListener('change', (e: Event) => {
+    const target = e.target as HTMLSelectElement;
+    activeFilters.tier = target.value;
     filterMaps();
   });
 
@@ -456,17 +1154,39 @@ const getResourceIcon = (type: string): string => {
       const resource = button.getAttribute('data-resource')!;
       if (activeFilters.resources.has(resource)) {
         activeFilters.resources.delete(resource);
-        button.classList.remove('bg-gray-100', 'dark:bg-gray-700');
       } else {
         activeFilters.resources.add(resource);
-        button.classList.add('bg-gray-100', 'dark:bg-gray-700');
+      }
+      filterMaps();
+    });
+  });
+
+  chestFilters.forEach(button => {
+    button.addEventListener('click', () => {
+      const chestType = button.getAttribute('data-chest-type')!;
+      if (activeFilters.chests.has(chestType)) {
+        activeFilters.chests.delete(chestType);
+      } else {
+        activeFilters.chests.add(chestType);
+      }
+      filterMaps();
+    });
+  });
+
+  dungeonFilters.forEach(button => {
+    button.addEventListener('click', () => {
+      const dungeonType = button.getAttribute('data-dungeon-type')!;
+      if (activeFilters.dungeons.has(dungeonType)) {
+        activeFilters.dungeons.delete(dungeonType);
+      } else {
+        activeFilters.dungeons.add(dungeonType);
       }
       filterMaps();
     });
   });
 
   // Adicionar atalho de teclado para busca (Ctrl+K)
-  document.addEventListener('keydown', (e) => {
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
       e.preventDefault();
       searchInput.focus();
@@ -475,13 +1195,21 @@ const getResourceIcon = (type: string): string => {
 
   // Initialize
   const initializeMaps = () => {
-    maps = Array.from(document.querySelectorAll('[data-map]')).map(el => 
-      JSON.parse(el.getAttribute('data-map')!)
-    );
-    filteredMaps = [...maps];
-    updateResourceCounts();
+    const mapsJsonElement = document.getElementById('maps-data');
+    const mapsJsonText = mapsJsonElement ? mapsJsonElement.textContent || '[]' : '[]';
+    
+    try {
+      maps = JSON.parse(mapsJsonText);
+      filteredMaps = [...maps];
+      renderMaps(); // Renderiza os mapas na tela
+      updateAllCounts();
+    } catch (error) {
+      console.error('Erro ao inicializar mapas:', error);
+      noResultsElement.classList.remove('hidden');
+      mapList.classList.add('hidden');
+    }
   };
-
+  
   // Initialize on page load and after view transitions
   document.addEventListener('astro:page-load', () => {
     initializeMaps();
@@ -526,5 +1254,19 @@ const getResourceIcon = (type: string): string => {
   /* Estilo para os filtros de recursos ativos */
   .resource-filter.active {
     @apply bg-indigo-50 dark:bg-indigo-900/40 border-indigo-300 dark:border-indigo-500 text-indigo-700 dark:text-indigo-300;
+  }
+  
+  /* Estilo para os tooltips */
+  .group:hover .tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  .tooltip {
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    z-index: 50;
+    transition: opacity 0.2s, visibility 0.2s;
   }
 </style>
