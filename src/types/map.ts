@@ -6,21 +6,18 @@ export type Size = 'small' | 'large';
 export interface ChestItem {
   type: ChestType;
   size: Size;
-  icon: string;
   count?: number;
 }
 
 export interface DungeonItem {
   type: DungeonType;
   size: Size;
-  icon: string;
   count?: number;
 }
 
 export interface ResourceItem {
   type: ResourceType;
   size: Size;
-  icon: string;
   count?: number;
 }
 

@@ -76,12 +76,12 @@ const resourceIcons = {
 
 const getTierClass = (tier: number) => {
   switch (tier) {
-    case 4: return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-    case 5: return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-    case 6: return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
-    case 7: return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-    case 8: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+    case 4: return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-400 dark:border-blue-700';
+    case 5: return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-400 dark:border-green-700';
+    case 6: return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200 border-purple-400 dark:border-purple-700';
+    case 7: return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border-red-400 dark:border-red-700';
+    case 8: return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 border-yellow-400 dark:border-yellow-700';
+    default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200 border-gray-400 dark:border-gray-700';
   }
 };
 
@@ -92,15 +92,8 @@ const getChestIcon = (chest: ChestItem) => {
     return { iconPath: '/icons/chest_unknown.png', label: chest.type };
   }
   
-  // Usar o ícone específico de tamanho ou o fornecido na propriedade icon
-  let iconPath = '';
-  if (chest.icon) {
-    // Se o ícone foi especificado no JSON, use-o diretamente
-    iconPath = chest.icon.endsWith('.png') ? chest.icon : `${chest.icon}.png`;
-  } else {
-    // Senão, use os padrões
-    iconPath = `/icons/${chest.size === 'large' ? iconInfo.large : iconInfo.small}`;
-  }
+  // Usar sempre o ícone pequeno, independente do tamanho do baú
+  const iconPath = `/icons/${iconInfo.small}`;
   
   const sizeLabel = chest.size === 'large' ? 'Grande' : 'Pequeno';
   return { 
@@ -116,14 +109,8 @@ const getDungeonIcon = (dungeon: DungeonItem) => {
     return { iconPath: '/icons/dungeon_unknown.png', label: dungeon.type };
   }
   
-  let iconPath = '';
-  if (dungeon.icon) {
-    // Se o ícone foi especificado no JSON, use-o diretamente
-    iconPath = dungeon.icon.endsWith('.png') ? dungeon.icon : `${dungeon.icon}.png`;
-  } else {
-    // Senão, use os padrões
-    iconPath = `/icons/${dungeon.size === 'large' ? iconInfo.large : iconInfo.small}`;
-  }
+  // Usar sempre o ícone pequeno, independente do tamanho da dungeon
+  const iconPath = `/icons/${iconInfo.small}`;
   
   const sizeLabel = dungeon.size === 'large' ? 'Grande' : 'Pequeno';
   return { 
@@ -139,14 +126,11 @@ const getResourceIcon = (resource: ResourceItem) => {
     return { iconPath: '/icons/resource_unknown.png', label: resource.type };
   }
   
-  let iconPath = '';
-  if (resource.icon) {
-    // Se o ícone foi especificado no JSON, use-o diretamente
-    iconPath = resource.icon.endsWith('.png') ? resource.icon : `${resource.icon}.png`;
-  } else {
-    // Senão, use os padrões
-    iconPath = `/icons/${resource.size === 'large' ? iconInfo.large : iconInfo.small}`;
-  }
+  // Usar sempre o ícone pequeno, independente do tamanho do recurso
+  const iconPath = `/icons/${iconInfo.small}`;
+  
+  // Adicionar log para debugging
+  console.log(`Resource type: ${resource.type}, Path: ${iconPath}`);
   
   const sizeLabel = resource.size === 'large' ? 'Grande' : 'Pequeno';
   return { 
@@ -160,87 +144,239 @@ type ResourceDisplay = {
   label: string;
   size: 'small' | 'large';
   count?: number;
+  type: string;
 };
 
 // Obtém todos os recursos formatados para exibição
 const getAllResources = (): ResourceDisplay[] => {
   const allResources: ResourceDisplay[] = [
-    ...(map.chests || []).map(chest => {
+    ...(map.chests || []).map((chest: ChestItem) => {
       const { iconPath, label } = getChestIcon(chest);
-      return { iconPath, label, size: chest.size, count: chest.count };
+      return { iconPath, label, size: chest.size, count: chest.count, type: chest.type };
     }),
-    ...(map.dungeons || []).map(dungeon => {
+    ...(map.dungeons || []).map((dungeon: DungeonItem) => {
       const { iconPath, label } = getDungeonIcon(dungeon);
-      return { iconPath, label, size: dungeon.size, count: dungeon.count };
+      return { iconPath, label, size: dungeon.size, count: dungeon.count, type: dungeon.type };
     }),
-    ...(map.resources || []).map(resource => {
+    ...(map.resources || []).map((resource: ResourceItem) => {
       const { iconPath, label } = getResourceIcon(resource);
-      return { iconPath, label, size: resource.size, count: resource.count };
+      return { iconPath, label, size: resource.size, count: resource.count, type: resource.type };
     })
   ];
   return allResources;
 };
+
+const tierBackground = getTierClass(map.tier);
 ---
 
-<div class="map-card bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 transition-all duration-300 hover:shadow-lg dark:hover:shadow-gray-700/30">
-  <div class="flex justify-between items-start mb-3">
-    <h3 class="text-base font-medium text-gray-900 dark:text-gray-100">{map.name}</h3>
-    <span class={`tier-badge ${getTierClass(map.tier)} px-3 py-1 rounded-full text-xs font-semibold`}>
-      Tier {map.tier}
-    </span>
+<div class={`map-card overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl dark:shadow-gray-900/30 hover:transform hover:scale-102 ${map.tier ? 'border-l-4 ' + tierBackground.split(' ').filter(c => c.includes('border')).join(' ') : 'border-l-4 border-transparent'}`}>
+  <div class="card-header p-4 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 border-b border-gray-200 dark:border-gray-700">
+    <div class="flex justify-between items-center">
+      <h3 class="text-base font-semibold text-gray-900 dark:text-gray-100">{map.name}</h3>
+      <span class={`tier-badge ${tierBackground} px-3 py-1 rounded-full text-xs font-semibold`}>
+        Tier {map.tier}
+      </span>
+    </div>
   </div>
   
-  <div class="flex flex-wrap gap-2 min-h-[48px] mb-3">
-    {getAllResources().map(resource => (
-      <div class="resource-icon group relative" title={resource.label}>
-        {resource.count && resource.count > 1 && (
-          <span class="resource-count absolute -top-2 -right-2 bg-white dark:bg-gray-700 shadow-sm rounded-full px-1.5 py-0.5 text-xs font-medium text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
-            {resource.count}
-          </span>
-        )}
-        <div class={`w-8 h-8 bg-gray-50 dark:bg-gray-700 rounded-lg p-1 transition-transform transform hover:scale-110 ${resource.size === 'large' ? 'ring-2 ring-yellow-400' : ''}`}>
-          <img 
-            src={resource.iconPath} 
-            alt={resource.label}
-            class="w-full h-full object-contain"
-            loading="lazy"
-            onerror="this.onerror=null; this.src='/icons/resource_unknown.png';"
-          />
+  <div class="card-body p-4 bg-white dark:bg-gray-800">
+    <div class="resource-grid mb-4">
+      {getAllResources().map(resource => (
+        <div class="resource-icon-wrapper relative" title={resource.label}>
+          <div class="resource-icon-container">
+            {resource.count && resource.count > 0 && (
+              <span class="resource-count absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow-md z-20">
+                {resource.count}
+              </span>
+            )}
+            <div class={`resource-icon w-10 h-10 bg-gray-50 dark:bg-gray-700 rounded-lg p-1.5 shadow-sm transition-transform hover:scale-110 hover:shadow-md ${resource.size === 'large' ? 'ring-2 ring-yellow-400 dark:ring-yellow-600' : ''}`}>
+              <img 
+                src={resource.iconPath} 
+                alt={resource.label}
+                class="w-full h-full object-contain"
+                loading="lazy"
+                onerror="this.onerror=null; this.src='/icons/resource_unknown.png'; this.classList.add('error-icon'); console.error('Failed to load icon:', this.alt);"
+              />
+            </div>
+          </div>
+          <div class="tooltip opacity-0 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md py-1.5 px-3 absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 pointer-events-none transition-opacity group-hover:opacity-100 whitespace-nowrap z-20 shadow-lg">
+            {resource.label}{resource.count && resource.count > 1 ? ` (${resource.count})` : ''}
+            <div class="tooltip-arrow absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 transform rotate-45 left-1/2 -ml-1 -bottom-1"></div>
+          </div>
         </div>
-        <div class="opacity-0 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md py-1 px-2 absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 pointer-events-none transition-opacity group-hover:opacity-100 whitespace-nowrap z-10">
-          {resource.label}{resource.count && resource.count > 1 ? ` (${resource.count})` : ''}
-        </div>
-      </div>
-    ))}
-  </div>
+      ))}
+    </div>
 
-  <button
-    class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors flex items-center justify-center gap-2"
-    onclick={`
-      const imgPath = '${map.image.startsWith('/') ? map.image : '/maps/' + map.image}';
-      const img = new Image();
-      img.onload = () => window.open(imgPath, '_blank');
-      img.onerror = () => alert('Erro ao carregar a imagem do mapa.');
-      img.src = imgPath;
-    `}
-  >
-    <i class="fas fa-image"></i>
-    Ver Mapa
-  </button>
+    <button
+      class="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors flex items-center justify-center gap-2 font-medium shadow-sm"
+      data-map-image={`/${map.image.startsWith('/') ? map.image.substring(1) : 'maps/' + map.image}`}
+      data-map-name={map.name}
+      onclick="openMapModal(this.getAttribute('data-map-image'), this.getAttribute('data-map-name'))"
+    >
+      <i class="fas fa-map-marked-alt"></i>
+      Ver Mapa
+    </button>
+  </div>
 </div>
 
 <style>
   .map-card {
-    background: linear-gradient(to bottom, var(--tw-bg-opacity-from, #ffffff), var(--tw-bg-opacity-to, #fafafa));
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .map-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+    z-index: 1;
+    pointer-events: none;
+  }
+  
+  .dark .map-card::before {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
   }
 
-  .dark .map-card {
-    --tw-bg-opacity-from: #1f2937;
-    --tw-bg-opacity-to: #111827;
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 8px;
+    justify-items: center;
+    min-height: 48px;
+  }
+
+  .resource-icon-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+  }
+
+  .resource-icon-container {
+    position: relative;
+    width: 40px;
+    height: 40px;
+  }
+
+  .resource-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
   }
 
   .resource-icon:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
     transition: transform 0.2s ease;
   }
+  
+  .tooltip {
+    position: relative;
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  .resource-count {
+    animation: pulse 2s infinite;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  
+  .hover\:scale-102:hover {
+    transform: scale(1.02);
+  }
+  
+  .error-icon {
+    border: 2px solid red;
+    border-radius: 4px;
+    animation: pulse-error 2s infinite;
+  }
+  
+  @keyframes pulse-error {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+  }
 </style>
+
+<script is:inline>
+  function openMapModal(imagePath, mapName) {
+    // Verifica se o modal já existe, caso contrário cria
+    let modal = document.getElementById('map-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'map-modal';
+      modal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-80 transition-opacity duration-300 opacity-0';
+      modal.innerHTML = `
+        <div class="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden transform transition-transform duration-300 scale-90">
+          <div class="flex justify-between items-center p-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 class="text-xl font-semibold text-gray-900 dark:text-white" id="modal-title"></h3>
+            <button type="button" class="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white" onclick="closeMapModal()">
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+          <div class="relative flex-1 overflow-auto p-2">
+            <div class="flex items-center justify-center min-h-[300px] w-full">
+              <img id="modal-image" src="" alt="" class="max-w-full max-h-[70vh] object-contain" />
+            </div>
+          </div>
+          <div class="flex justify-end p-4 border-t border-gray-200 dark:border-gray-700">
+            <button type="button" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg" onclick="closeMapModal()">Fechar</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      // Adiciona evento de fechamento ao clicar fora do modal
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+          closeMapModal();
+        }
+      });
+      
+      // Adiciona evento de tecla Esc para fechar
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('map-modal')) {
+          closeMapModal();
+        }
+      });
+    }
+    
+    // Define o conteúdo do modal
+    const modalImage = document.getElementById('modal-image');
+    const modalTitle = document.getElementById('modal-title');
+    
+    if (modalImage && modalTitle) {
+      modalImage.src = imagePath;
+      modalImage.alt = mapName;
+      modalTitle.textContent = mapName;
+      
+      // Exibe o modal com animação
+      setTimeout(() => {
+        modal.classList.add('opacity-100');
+        modal.querySelector('.scale-90').classList.add('scale-100');
+      }, 10);
+    }
+  }
+  
+  function closeMapModal() {
+    const modal = document.getElementById('map-modal');
+    if (modal) {
+      // Animação de saída
+      modal.classList.remove('opacity-100');
+      modal.querySelector('.scale-100').classList.remove('scale-100');
+      
+      // Remove o modal após a animação
+      setTimeout(() => {
+        modal.remove();
+      }, 300);
+    }
+  }
+</script>

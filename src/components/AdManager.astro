@@ -1,0 +1,185 @@
+---
+// Configurações para ativação ou desativação de anúncios
+const AD_ENABLED = true; // Definir como false para desativar todos os anúncios
+
+// Você pode personalizar para diferentes redes de anúncios
+const AD_NETWORK = 'adsense'; // 'adsense', 'adsterra', etc.
+
+// IDs para Google AdSense
+const ADSENSE_CLIENT = 'ca-pub-2258595237443690'; // ID do cliente fornecido
+
+// Configurações para o aviso de cookies
+const COOKIE_CONSENT_ENABLED = true; // Ativar aviso de consentimento de cookies
+---
+
+{AD_ENABLED && (
+  <>
+    <!-- Estilos para containers de anúncio -->
+    <style is:global>
+      .ad-loaded .ad-placeholder {
+        display: none;
+      }
+      
+      /* Suavizar transição de fade-in dos anúncios */
+      .ad-container {
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+      }
+      
+      .ad-loaded {
+        opacity: 1;
+      }
+      
+      /* Estilos para o aviso de cookies */
+      #cookie-consent {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 9999;
+        padding: 1rem;
+        display: none;
+      }
+      
+      .dark #cookie-consent {
+        background-color: rgba(31, 41, 55, 0.95);
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+    
+    <!-- Aviso de consentimento de cookies -->
+    {COOKIE_CONSENT_ENABLED && (
+      <div id="cookie-consent" class="text-center">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p class="text-sm text-gray-700 dark:text-gray-300">
+            Este site usa cookies para melhorar sua experiência e para exibir anúncios personalizados. 
+            Ao continuar navegando, você concorda com o uso de cookies.
+          </p>
+          <div class="flex gap-2">
+            <button id="cookie-accept" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors">
+              Aceitar
+            </button>
+            <button id="cookie-reject" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+              Rejeitar
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    
+    <!-- Scripts para Google AdSense -->
+    {AD_NETWORK === 'adsense' && (
+      <>
+        <script is:inline define:vars={{ ADSENSE_CLIENT, COOKIE_CONSENT_ENABLED }}>
+          // Script para gerenciar consentimento de cookies
+          function manageCookieConsent() {
+            const consentValue = localStorage.getItem('cookie-consent');
+            const consentBanner = document.getElementById('cookie-consent');
+            
+            if (COOKIE_CONSENT_ENABLED && consentBanner) {
+              // Se não houver consentimento, mostrar banner
+              if (!consentValue) {
+                consentBanner.style.display = 'block';
+                
+                // Configurar botões
+                document.getElementById('cookie-accept')?.addEventListener('click', () => {
+                  localStorage.setItem('cookie-consent', 'accepted');
+                  consentBanner.style.display = 'none';
+                  loadAdsenseScript(); // Carregar anúncios após aceitar
+                });
+                
+                document.getElementById('cookie-reject')?.addEventListener('click', () => {
+                  localStorage.setItem('cookie-consent', 'rejected');
+                  consentBanner.style.display = 'none';
+                });
+                
+                return false; // Não carregar anúncios ainda
+              }
+              
+              return consentValue === 'accepted';
+            }
+            
+            return true; // Se não precisar de consentimento, apenas carregar
+          }
+          
+          // Script para carregar AdSense de forma responsiva
+          function loadAdsenseScript() {
+            // Verificar se o usuário tem preferências de não rastreamento
+            const doNotTrack = 
+              window.doNotTrack === "1" || 
+              navigator.doNotTrack === "1" || 
+              navigator.doNotTrack === "yes";
+              
+            // Não carregar anúncios para usuários com DNT ativado
+            if (doNotTrack) {
+              console.log("Respeitando preferência de não rastreamento do usuário.");
+              return;
+            }
+            
+            // Carregar script AdSense
+            const adScript = document.createElement('script');
+            adScript.async = true;
+            adScript.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
+            adScript.crossOrigin = 'anonymous';
+            document.head.appendChild(adScript);
+            
+            // Inicializar anúncios após carregar
+            adScript.onload = function() {
+              // Marcar os containers como carregados para esconder os placeholders
+              setTimeout(() => {
+                document.querySelectorAll('.ad-container').forEach(el => {
+                  el.classList.add('ad-loaded');
+                });
+                
+                // Inicializar todas as unidades de anúncio
+                document.querySelectorAll('.adsbygoogle').forEach(ad => {
+                  try {
+                    (adsbygoogle = window.adsbygoogle || []).push({});
+                  } catch (e) {
+                    console.error('Erro ao carregar anúncio:', e);
+                  }
+                });
+              }, 1000);
+            };
+            
+            // Observador para anúncios que são adicionados dinamicamente (in-feed)
+            const observer = new MutationObserver(function(mutations) {
+              mutations.forEach(function(mutation) {
+                mutation.addedNodes.forEach(function(node) {
+                  if (node.nodeType === 1) { // Elemento
+                    const ads = node.querySelectorAll('.adsbygoogle:not([data-adsbygoogle-status])');
+                    if (ads.length > 0) {
+                      ads.forEach(ad => {
+                        try {
+                          (adsbygoogle = window.adsbygoogle || []).push({});
+                          ad.closest('.ad-container')?.classList.add('ad-loaded');
+                        } catch (e) {
+                          console.error('Erro ao carregar anúncio dinâmico:', e);
+                        }
+                      });
+                    }
+                  }
+                });
+              });
+            });
+            
+            // Iniciar observação de mudanças no DOM
+            observer.observe(document.body, { childList: true, subtree: true });
+          }
+          
+          // Inicialização no carregamento da página
+          window.addEventListener('load', function() {
+            const consentGranted = manageCookieConsent();
+            if (consentGranted) {
+              loadAdsenseScript();
+            }
+          });
+        </script>
+      </>
+    )}
+    
+    <!-- Outros scripts de redes de anúncios podem ser adicionados aqui -->
+  </>
+)} 

@@ -5,19 +5,51 @@
       "name": "Cases-Ugumlos",
       "tier": 6,
       "image": "Cases-Ugumlos_T_6.png",
-      "chests":[
-        {"type": "GREEN", "size": "small", "icon": "icons/chest_green", "count": 1},
-        {"type": "BLUE", "size": "large", "icon": "icons/chest_blue", "count": 1}
+      "chests": [
+        {
+          "type": "GREEN",
+          "size": "small",
+          "count": 1
+        },
+        {
+          "type": "BLUE",
+          "size": "large",
+          "count": 1
+        }
       ],
-      "dungeons":[
-        {"type": "DUNGEON_SOLO", "size": "small", "icon": "icons/dungeon_solo", "count": 1}
+      "dungeons": [
+        {
+          "type": "DUNGEON_SOLO",
+          "size": "small",
+          "count": 1
+        }
       ],
       "resources": [
-        {"type": "STONE", "size": "small", "icon": "icons/resource_stone", "count": 1},
-        {"type": "WOOD", "size": "small", "icon": "icons/resource_wood", "count": 1},
-        {"type": "ORE", "size": "small", "icon": "icons/resource_ore", "count": 1},
-        {"type": "STONE", "size": "large", "icon": "icons/resource_stone", "count": 1},
-        {"type": "HIDE", "size": "small", "icon": "icons/resource_hide", "count": 1}
+        {
+          "type": "STONE",
+          "size": "small",
+          "count": 1
+        },
+        {
+          "type": "WOOD",
+          "size": "small",
+          "count": 1
+        },
+        {
+          "type": "ORE",
+          "size": "small",
+          "count": 1
+        },
+        {
+          "type": "STONE",
+          "size": "large",
+          "count": 1
+        },
+        {
+          "type": "HIDE",
+          "size": "small",
+          "count": 1
+        }
       ]
     },
     {
@@ -25,17 +57,115 @@
       "name": "Casitos-Alieam",
       "tier": 4,
       "image": "Casitos-Alieam_T_4.png",
-      "chests":[
-        {"type": "GREEN", "size": "small", "icon": "icons/chest_green", "count": 2},
-        {"type": "BLUE", "size": "large", "icon": "icons/chest_blue", "count": 1}
+      "chests": [
+        {
+          "type": "GREEN",
+          "size": "small",
+          "count": 2
+        },
+        {
+          "type": "BLUE",
+          "size": "large",
+          "count": 1
+        }
       ],
-      "dungeons":[],
+      "dungeons": [],
       "resources": [
-        {"type": "FIBER", "size": "large", "icon": "icons/resource_fiber", "count": 1},
-        {"type": "ORE", "size": "small", "icon": "icons/resource_ore", "count": 1},
-        {"type": "STONE", "size": "small", "icon": "icons/resource_stone", "count": 1}
+        {
+          "type": "FIBER",
+          "size": "large",
+          "count": 1
+        },
+        {
+          "type": "ORE",
+          "size": "small",
+          "count": 1
+        },
+        {
+          "type": "STONE",
+          "size": "small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Casitos-Atinaum",
+      "tier": 6,
+      "image": "Casitos-Atinaum_T_6.png",
+      "chests": [
+        {
+          "type": "GREEN",
+          "size": "small",
+          "count": 3
+        },
+        {
+          "type": "BLUE",
+          "size": "large",
+          "count": 1
+        },
+        {
+          "type": "GOLD",
+          "size": "small",
+          "count": 2
+        },
+        {
+          "type": "GOLD",
+          "size": "large",
+          "count": 1
+        }
+      ],
+      "dungeons": [],
+      "resources": [
+        {
+          "type": "FIBER",
+          "size": "small",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Casos-Aiagsum",
+      "tier": 4,
+      "image": "Casos-Aiagsum_T_4.png",
+      "chests": [
+        {
+          "type": "GREEN",
+          "size": "small",
+          "count": 2
+        },
+        {
+          "type": "BLUE",
+          "size": "large",
+          "count": 1
+        }
+      ],
+      "dungeons": [
+        {
+          "type": "DUNGEON_GROUP",
+          "size": "small",
+          "count": 2
+        }
+      ],
+      "resources": [
+        {
+          "type": "HIDE",
+          "size": "small",
+          "count": 1
+        },
+        {
+          "type": "HIDE",
+          "size": "large",
+          "count": 1
+        },
+        {
+          "type": "WOOD",
+          "size": "small",
+          "count": 1
+        }
       ]
     }
   ],
-  "lastUpdated": "2024-04-11T00:00:00.000Z"
+  "lastUpdated": "2025-04-11T11:12:14.283Z"
 }

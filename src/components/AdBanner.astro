@@ -1,0 +1,90 @@
+---
+interface Props {
+  format: 'horizontal' | 'sidebar' | 'rectangle';
+  id?: string;
+  className?: string;
+  adSlot?: string;
+}
+
+const { format, id, className = '', adSlot = '' } = Astro.props;
+
+// Definir as classes com base no formato
+let containerClasses = 'ad-container bg-white dark:bg-gray-800 rounded-xl shadow border border-gray-200 dark:border-gray-700 overflow-hidden flex items-center justify-center mt-2';
+let dimensions = '';
+
+switch (format) {
+  case 'horizontal':
+    dimensions = 'w-full h-[90px] md:h-[90px]';
+    break;
+  case 'sidebar':
+    dimensions = 'w-full h-[600px]';
+    break;
+  case 'rectangle':
+    dimensions = 'w-full h-[250px]';
+    break;
+}
+
+const finalClasses = `${containerClasses} ${dimensions} ${className}`;
+---
+
+<div id={id} class={finalClasses}>
+  <div class="ad-placeholder text-center p-5 w-full h-full flex flex-col items-center justify-center">
+    <p class="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">
+      <i class="fas fa-ad mr-2"></i>
+      Espaço para Anúncio
+    </p>
+    <p class="text-gray-400 dark:text-gray-500 text-xs">
+      Apoie o Avalon Roads
+    </p>
+  </div>
+  
+  {adSlot && (
+    <ins class="adsbygoogle"
+         style="display:block; width:100%; height:100%;"
+         data-ad-client="ca-pub-2258595237443690"
+         data-ad-slot={adSlot}
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+  )}
+  
+  <slot />
+</div>
+
+<style>
+  .ad-container {
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  
+  .ad-container::after {
+    content: 'AD';
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 8px;
+    color: rgba(107, 114, 128, 0.5);
+    letter-spacing: 0.5px;
+    z-index: 10;
+  }
+  
+  .ad-placeholder {
+    background-image: linear-gradient(45deg, rgba(243, 244, 246, 0.5) 25%, transparent 25%, transparent 50%, rgba(243, 244, 246, 0.5) 50%, rgba(243, 244, 246, 0.5) 75%, transparent 75%, transparent);
+    background-size: 20px 20px;
+    background-color: rgba(249, 250, 251, 0.3);
+  }
+  
+  .dark .ad-placeholder {
+    background-image: linear-gradient(45deg, rgba(31, 41, 55, 0.5) 25%, transparent 25%, transparent 50%, rgba(31, 41, 55, 0.5) 50%, rgba(31, 41, 55, 0.5) 75%, transparent 75%, transparent);
+    background-color: rgba(17, 24, 39, 0.3);
+  }
+  
+  /* Estilos para anúncios reais */
+  .adsbygoogle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+  }
+</style> 

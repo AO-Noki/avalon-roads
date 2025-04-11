@@ -2,34 +2,11 @@ import type { Map, ChestItem, DungeonItem, ResourceItem, ResourceType } from '..
 import fs from 'fs';
 import path from 'path';
 
-// Mapeamento dos tipos antigos para os novos
-const resourceTypeMap: Record<string, string> = {
-  'ROCK': 'STONE',
-  'DUNGEON': 'DUNGEON_SOLO',
-  'LOGS': 'WOOD',
-  'COTTON': 'FIBER',
-  'HIRE': 'HIDE'
-};
-
-// Mapeamento dos ícones para os tipos de recursos
-const iconTypeMap: Record<string, string> = {
-  "T.png": "BLUE",
-  "V.png": "GREEN",
-  "S.png": "STONE",
-  "D.png": "DUNGEON_SOLO",
-  "W.png": "WOOD",
-  "K.png": "ORE",
-  "P.png": "HIDE",
-  "M.png": "FIBER",
-  "Z.png": "GOLD"
-};
-
-// Função para converter o tipo de recurso para o novo padrão
-function convertResourceType(type: string): string {
-  return resourceTypeMap[type] || type;
-}
-
-// Função para extrair dados do HTML do Avalon Map
+/**
+ * Extrai dados de mapas do arquivo HTML do Avalon Map
+ * @param htmlFilePath Caminho para o arquivo HTML com dados dos mapas
+ * @returns Array de objetos Map com os dados extraídos
+ */
 export async function extractMapData(htmlFilePath: string): Promise<Map[]> {
   // Lê o arquivo HTML
   const html = fs.readFileSync(htmlFilePath, 'utf-8');
@@ -45,12 +22,10 @@ export async function extractMapData(htmlFilePath: string): Promise<Map[]> {
   // Extrai o conteúdo do array
   const dataString = match[1];
   
-  // Dividir o dataString em objetos individuais
-  const mapObjects: Map[] = [];
-  let id = 1;
-  
   // Usar regex para extrair cada objeto de mapa
   const mapRegex = /{[\s\S]*?name: "(.*?)",[\s\S]*?tier: (\d+),[\s\S]*?icons: \[([\s\S]*?)\],[\s\S]*?img: "(.*?)"/g;
+  const mapObjects: Map[] = [];
+  let id = 1;
   let mapMatch;
   
   while ((mapMatch = mapRegex.exec(dataString)) !== null) {
@@ -68,38 +43,30 @@ export async function extractMapData(htmlFilePath: string): Promise<Map[]> {
     let iconMatch;
     
     while ((iconMatch = iconRegex.exec(iconsString)) !== null) {
-      const resourceType = convertResourceType(iconMatch[1]);
+      const resourceType = iconMatch[1];
       const resourceCount = iconMatch[2] ? parseInt(iconMatch[2], 10) : 1;
       const size = resourceCount > 1 ? 'large' : 'small';
       
-      // Determinar o tipo de ícone
-      let iconName = '';
-      
+      // Determinar o tipo de recurso e adicionar ao grupo correto
       if (resourceType.includes('BLUE') || resourceType.includes('GREEN') || resourceType.includes('GOLD')) {
         // É um baú
-        iconName = `icons/chest_${resourceType.toLowerCase()}`;
         chests.push({
           type: resourceType as any,
           size,
-          icon: iconName,
           count: resourceCount
         });
       } else if (resourceType.includes('DUNGEON')) {
         // É uma dungeon
-        iconName = `icons/dungeon_${resourceType.toLowerCase().replace('dungeon_', '')}`;
         dungeons.push({
           type: resourceType as any,
           size,
-          icon: iconName,
           count: resourceCount
         });
       } else {
         // É um recurso
-        iconName = `icons/resource_${resourceType.toLowerCase()}`;
         resources.push({
           type: resourceType as any,
           size,
-          icon: iconName,
           count: resourceCount
         });
       }
@@ -111,16 +78,32 @@ export async function extractMapData(htmlFilePath: string): Promise<Map[]> {
       name,
       tier,
       image: imgPath,
-      chests,
-      dungeons,
-      resources
+      chests: chests.map(({ type, size, count }) => ({
+        type,
+        size,
+        count
+      })),
+      dungeons: dungeons.map(({ type, size, count }) => ({
+        type,
+        size,
+        count
+      })),
+      resources: resources.map(({ type, size, count }) => ({
+        type,
+        size,
+        count
+      }))
     });
   }
   
   return mapObjects;
 }
 
-// Função para salvar os dados em um arquivo JSON
+/**
+ * Salva os dados extraídos em um arquivo JSON
+ * @param maps Array de mapas a serem salvos
+ * @param outputPath Caminho do arquivo JSON de saída
+ */
 export async function saveMapData(maps: Map[], outputPath: string): Promise<void> {
   const jsonData = {
     maps,
@@ -134,7 +117,11 @@ export async function saveMapData(maps: Map[], outputPath: string): Promise<void
   console.log(`Total de mapas: ${maps.length}`);
 }
 
-// Função para executar a extração e salvamento
+/**
+ * Executa todo o processo de extração e salvamento de dados
+ * @param htmlFilePath Caminho do arquivo HTML de origem
+ * @param outputPath Caminho do arquivo JSON de destino
+ */
 export async function extractAndSaveMaps(htmlFilePath: string, outputPath: string): Promise<void> {
   try {
     const maps = await extractMapData(htmlFilePath);

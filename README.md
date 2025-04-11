@@ -1,4 +1,4 @@
-# Avalon Roads
+# Avalon Roads - <https://avalonroads.noktech.com.br/>
 
 Um explorador interativo de mapas Avalon Roads do Albion Online, construído com Astro, TypeScript e Tailwind CSS.
 
@@ -17,37 +17,54 @@ Um explorador interativo de mapas Avalon Roads do Albion Online, construído com
 - [TypeScript](https://www.typescriptlang.org/) - Segurança de Tipos
 - [Tailwind CSS](https://tailwindcss.com) - Estilização
 - [Font Awesome](https://fontawesome.com) - Ícones
+- [Bun](https://bun.sh) - Runtime JavaScript e gerenciador de pacotes
 
 ## Desenvolvimento
 
-### 1. Instale as dependências
+### 1. Instale o Bun (caso ainda não tenha)
 
 ```bash
-npm install
+# Para macOS, Linux e WSL (Windows Subsystem for Linux)
+curl -fsSL https://bun.sh/install | bash
+
+# Para Windows (via PowerShell)
+powershell -c "irm bun.sh/install.ps1 | iex"
 ```
 
-### 2. Extraia os dados dos mapas (se você tiver o arquivo HTML original)
+Verifique a instalação:
 
 ```bash
-npm run extract-maps [caminho/para/Avalon Map.html]
+bun --version
 ```
 
-### 3. Inicie o servidor de desenvolvimento
+### 2. Instale as dependências
 
 ```bash
-npm run dev
+bun install
 ```
 
-### 4. Compile para produção
+### 3. Extraia os dados dos mapas (se você tiver o arquivo HTML original)
 
 ```bash
-npm run build
+bun run extract-maps [caminho/para/Avalon Map.html]
 ```
 
-### 5. Visualize a compilação de produção
+### 4. Inicie o servidor de desenvolvimento
 
 ```bash
-npm run preview
+bun run dev
+```
+
+### 5. Compile para produção
+
+```bash
+bun run build
+```
+
+### 6. Visualize a compilação de produção
+
+```bash
+bun run preview
 ```
 
 ## Estrutura do Projeto
@@ -66,6 +83,15 @@ npm run preview
 │   └── utils/           # Funções utilitárias
 └── package.json
 ```
+
+## Por que Bun?
+
+Estamos usando Bun por vários motivos:
+
+- **Desempenho superior**: Até 3x mais rápido que Node.js para execução e instalação de pacotes
+- **Compatibilidade**: Compatível com ecossistema npm existente
+- **Tudo em um**: Runtime JavaScript, bundler, transpilador e gerenciador de pacotes
+- **Recursos modernos**: Suporte nativo a TypeScript, JSX, modulos ES e outras funcionalidades modernas
 
 ## Contribuindo
 

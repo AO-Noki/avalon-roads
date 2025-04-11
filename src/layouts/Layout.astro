@@ -1,5 +1,7 @@
 ---
-import { ViewTransitions } from 'astro:transitions';
+// Removendo importação que está causando o erro
+// import { ViewTransitions } from 'astro:transitions';
+import AdManager from '../components/AdManager.astro';
 
 interface Props {
   title: string;
@@ -8,38 +10,28 @@ interface Props {
 const { title } = Astro.props;
 ---
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content="Explorador de mapas Avalon Roads do Albion Online" />
+    <meta name="description" content="Encontre mapas Avalon Roads do Albion Online">
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
-    <ViewTransitions />
-    <script>
-      // Theme initialization
-      const initTheme = () => {
-        const theme = localStorage.getItem('theme') || 'system';
-        const isDark = theme === 'dark' || 
-          (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        
-        document.documentElement.classList.toggle('dark', isDark);
-        document.documentElement.classList.toggle('light', !isDark);
-      };
-
-      // Initialize theme on page load
-      document.addEventListener('DOMContentLoaded', initTheme);
-      // Re-initialize theme on view transitions
-      document.addEventListener('astro:after-swap', initTheme);
-      // Watch for system theme changes
-      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', initTheme);
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2258595237443690" crossorigin="anonymous"></script>
+    <!-- Preload theme choice to avoid FOUC -->
+    <script is:inline>
+      const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.classList.toggle('dark', theme === 'dark');
     </script>
+    
+    <!-- Gerenciador de Anúncios -->
+    <AdManager />
   </head>
-  <body class="min-h-screen bg-white dark:bg-gray-900 transition-colors flex flex-col">
+  <body class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
     <div class="flex-grow">
       <slot />
     </div>
@@ -73,46 +65,59 @@ const { title } = Astro.props;
 </html>
 
 <style is:global>
-  :root {
-    --accent: 136, 58, 234;
-    --accent-light: 224, 204, 250;
-    --accent-dark: 49, 10, 101;
-    --accent-gradient: linear-gradient(
-      45deg,
-      rgb(var(--accent)),
-      rgb(var(--accent-light)) 30%,
-      white 60%
-    );
+  html {
+    font-family: system-ui, sans-serif;
+    scroll-behavior: smooth;
   }
-
-  /* Loading skeleton animation */
-  @keyframes shimmer {
-    0% { background-position: -1000px 0; }
-    100% { background-position: 1000px 0; }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
   }
-
-  .loading-skeleton {
-    background: linear-gradient(
-      to right,
-      var(--tw-gradient-from) 8%,
-      var(--tw-gradient-via) 18%,
-      var(--tw-gradient-to) 33%
-    );
-    background-size: 2000px 100%;
-    animation: shimmer 2s linear infinite;
+  
+  .dark {
+    color-scheme: dark;
   }
-
-  /* Dark mode loading skeleton */
-  .dark .loading-skeleton {
-    --tw-gradient-from: #2d3748;
-    --tw-gradient-via: #4a5568;
-    --tw-gradient-to: #2d3748;
+  
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
   }
-
-  /* Light mode loading skeleton */
-  .light .loading-skeleton {
-    --tw-gradient-from: #f6f7f8;
-    --tw-gradient-via: #edeef1;
-    --tw-gradient-to: #f6f7f8;
+  
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+  }
+  
+  .dark ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .fade-in {
+    animation: fadeIn 0.3s ease-in;
   }
 </style>

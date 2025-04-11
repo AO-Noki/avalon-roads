@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import MapCard from '../components/MapCard.astro';
 import ThemeToggle from '../components/ThemeToggle.astro';
+import AdBanner from '../components/AdBanner.astro';
 import type { Map, ChestType, DungeonType, ResourceType, ChestItem, DungeonItem, ResourceItem } from '../types/map';
 import mapsData from '../data/maps.json';
 
@@ -11,19 +12,16 @@ const maps: Map[] = mapsData.maps.map(map => ({
   chests: (map.chests || []).map(item => ({
     type: item.type as ChestType,
     size: item.size as 'small' | 'large',
-    icon: item.icon,
     count: item.count
   })),
   dungeons: (map.dungeons || []).map(item => ({
     type: item.type as DungeonType,
     size: item.size as 'small' | 'large',
-    icon: item.icon,
     count: item.count
   })),
   resources: (map.resources || []).map(item => ({
     type: item.type as ResourceType,
     size: item.size as 'small' | 'large',
-    icon: item.icon,
     count: item.count
   }))
 }));
@@ -73,112 +71,176 @@ const getResourceIcon = (type: string): string => {
 ---
 
 <Layout title="Avalon Roads">
-  <header class="bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-900 dark:to-purple-900">
-    <div class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center mb-4">
-        <h1 class="text-4xl font-bold text-white">Avalon Roads</h1>
+  <header class="bg-gradient-to-b from-indigo-700 to-indigo-900 dark:from-indigo-900 dark:to-indigo-950">
+    <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h1 class="text-4xl font-bold text-white mb-2 flex items-center">
+            <i class="fas fa-map-marked-alt mr-3 text-indigo-300"></i>
+            Avalon Roads
+          </h1>
+          <p class="text-indigo-100 text-lg">
+            Explore <span id="total-maps" class="font-semibold">{maps.length}</span> mapas únicos do Avalon
+          </p>
+          <p class="text-indigo-300 text-sm mt-1 flex items-center">
+            <i class="fas fa-clock mr-2"></i>
+            Última atualização: {lastUpdated}
+          </p>
+        </div>
         <ThemeToggle />
       </div>
-      <p class="text-indigo-100 text-lg">
-        Explore <span id="total-maps" class="font-semibold">{maps.length}</span> mapas únicos do Avalon
-      </p>
-      <p class="text-indigo-200 text-sm mt-1">
-        Última atualização: {lastUpdated}
-      </p>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <!-- Search Bar -->
-        <div class="relative">
+  <!-- Banner de anúncio horizontal abaixo do cabeçalho -->
+  <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 mt-6">
+    <AdBanner format="horizontal" id="ad-header" adSlot="1234567890" />
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 mb-8 mt-5">
+      <!-- Filtros superiores -->
+      <div class="flex flex-col lg:flex-row gap-4 mb-6">
+        <!-- Search Bar - Redesenhada -->
+        <div class="relative flex-grow">
+          <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <i class="fas fa-search text-indigo-400 dark:text-indigo-300"></i>
+          </div>
           <input 
             type="text" 
             id="search" 
             placeholder="Buscar mapas... (Ctrl + K)" 
-            class="w-full px-4 py-2 pl-10 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+            class="w-full px-4 py-3.5 pl-11 bg-gray-50 dark:bg-gray-700/50 border-0 rounded-xl text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 shadow-sm"
           />
-          <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <kbd class="absolute right-4 top-1/2 transform -translate-y-1/2 hidden md:inline-flex px-2 py-1 font-sans text-xs text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded">Ctrl+K</kbd>
         </div>
 
-        <!-- Sort Controls -->
-        <div class="flex gap-3">
-          <button id="sort-name" class="flex-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-            <i class="fas fa-sort-alpha-down mr-2"></i>Ordenar por Nome
-          </button>
-          <button id="sort-tier" class="flex-1 px-4 py-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-            <i class="fas fa-sort-numeric-down mr-2"></i>Ordenar por Tier
-          </button>
-        </div>
+        <!-- Controles de ordenação e filtro redesenhados -->
+        <div class="flex gap-3 flex-wrap md:flex-nowrap">
+          <!-- Dropdown de tier -->
+          <div class="relative min-w-[140px]">
+            <select 
+              id="tier-filter" 
+              class="w-full h-full px-4 py-3.5 bg-gray-50 dark:bg-gray-700/50 border-0 rounded-xl text-gray-900 dark:text-gray-100 appearance-none cursor-pointer focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 shadow-sm pl-10"
+            >
+              <option value="">Todos os Tiers</option>
+              {tiers.map(tier => (
+                <option value={tier}>Tier {tier}</option>
+              ))}
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-indigo-400 dark:text-indigo-300">
+              <i class="fas fa-layer-group"></i>
+            </div>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400">
+              <i class="fas fa-chevron-down text-xs"></i>
+            </div>
+          </div>
 
-        <!-- Tier Filter -->
-        <div class="relative">
-          <select 
-            id="tier-filter" 
-            class="w-full px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
-          >
-            <option value="">Todos os Tiers</option>
-            {tiers.map(tier => (
-              <option value={tier}>Tier {tier}</option>
-            ))}
-          </select>
-          <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+          <!-- Botões de Ordenação -->
+          <div class="flex bg-gray-50 dark:bg-gray-700/50 rounded-xl shadow-sm overflow-hidden p-0.5">
+            <button 
+              id="sort-name" 
+              class="px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors duration-200 hover:text-indigo-600 dark:hover:text-indigo-400 min-w-[120px]"
+            >
+              <i class="fas fa-sort-alpha-down"></i>
+              <span>Por Nome</span>
+            </button>
+            <button 
+              id="sort-tier" 
+              class="px-4 py-3 rounded-lg flex items-center justify-center gap-2 font-medium transition-colors duration-200 hover:text-indigo-600 dark:hover:text-indigo-400 min-w-[120px]"
+            >
+              <i class="fas fa-sort-numeric-down"></i>
+              <span>Por Tier</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Resource Filters -->
-      <div class="mt-4 flex flex-wrap gap-2" id="resource-filters">
+      <!-- Resource Filters - Melhorados -->
+      <div class="flex flex-wrap gap-2 p-2 bg-gray-50 dark:bg-gray-700/30 rounded-xl" id="resource-filters">
         {allResourceTypes.map(type => (
           <button 
-            class="resource-filter px-3 py-2 rounded-full border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-colors flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200" 
+            class="resource-filter px-3 py-2 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 hover:border-indigo-300 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 shadow-sm" 
             data-resource={type}
           >
-            <img 
-              src={getResourceIcon(type)} 
-              alt={type} 
-              class="w-5 h-5"
-            />
-            {type}
+            <div class="w-6 h-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-1 transition-transform flex items-center justify-center">
+              <img 
+                src={getResourceIcon(type)} 
+                alt={type} 
+                class="w-full h-full object-contain"
+                loading="lazy"
+              />
+            </div>
+            <span class="font-medium">{type}</span>
           </button>
         ))}
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div id="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 hidden">
-      {Array(8).fill(0).map(() => (
-        <div class="map-card bg-white dark:bg-gray-800 p-4 rounded-xl">
-          <div class="flex justify-between items-start mb-3">
-            <div class="loading-skeleton h-6 w-32 rounded"></div>
-            <div class="loading-skeleton h-6 w-16 rounded-full"></div>
-          </div>
-          <div class="flex flex-wrap gap-2 min-h-[48px] mb-3">
-            {Array(4).fill(0).map(() => (
-              <div class="loading-skeleton h-8 w-8 rounded"></div>
-            ))}
-          </div>
-          <div class="loading-skeleton h-9 w-full rounded"></div>
+    <!-- Layout com anúncios -->
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- Conteúdo principal (mapas) -->
+      <div class="flex-grow">
+        <!-- Loading State -->
+        <div id="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {Array(6).fill(0).map(() => (
+            <div class="map-card bg-white dark:bg-gray-800 p-4 rounded-xl shadow-lg overflow-hidden">
+              <div class="flex justify-between items-start mb-3">
+                <div class="loading-skeleton h-6 w-32 rounded"></div>
+                <div class="loading-skeleton h-6 w-16 rounded-full"></div>
+              </div>
+              <div class="flex flex-wrap gap-2 min-h-[48px] mb-3">
+                {Array(4).fill(0).map(() => (
+                  <div class="loading-skeleton h-10 w-10 rounded-lg"></div>
+                ))}
+              </div>
+              <div class="loading-skeleton h-12 w-full rounded-lg"></div>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
 
-    <!-- Map List -->
-    <div id="map-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {maps.map(map => (
-        <div data-map={JSON.stringify(map)}>
-          <MapCard map={map} />
+        <!-- Map List -->
+        <div id="map-list" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {maps.map((map, index) => (
+            <>
+              <div data-map={JSON.stringify(map)} class="map-wrapper">
+                <MapCard map={map} />
+              </div>
+              
+              {/* Adicionar anúncio a cada 6 mapas na versão mobile */}
+              {index > 0 && (index + 1) % 6 === 0 && (
+                <div class="col-span-1 sm:col-span-2 lg:hidden my-2">
+                  <AdBanner format="rectangle" id={`ad-in-feed-${Math.floor(index/6)}`} adSlot="6677889900" />
+                </div>
+              )}
+            </>
+          ))}
         </div>
-      ))}
-    </div>
 
-    <!-- No Results -->
-    <div id="no-results" class="hidden text-center py-12">
-      <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-8 max-w-md mx-auto">
-        <i class="fas fa-search text-4xl mb-4 text-gray-400 dark:text-gray-500"></i>
-        <p class="text-lg text-gray-600 dark:text-gray-300 font-medium">Nenhum mapa encontrado.</p>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">Tente ajustar sua busca ou filtros.</p>
+        <!-- No Results -->
+        <div id="no-results" class="hidden text-center py-16">
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-10 max-w-md mx-auto shadow-lg">
+            <div class="bg-indigo-100 dark:bg-indigo-900/30 w-20 h-20 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 mb-6 mx-auto">
+              <i class="fas fa-search text-3xl"></i>
+            </div>
+            <p class="text-xl text-gray-700 dark:text-gray-200 font-medium mb-3">Nenhum mapa encontrado</p>
+            <p class="text-gray-500 dark:text-gray-400">Tente ajustar sua busca ou filtros para encontrar o que está procurando.</p>
+          </div>
+        </div>
       </div>
+
+      <!-- Anúncios na barra lateral (visível apenas em telas grandes) -->
+      <div class="hidden lg:block lg:w-[300px] space-y-6 self-start sticky top-6">
+        <AdBanner format="sidebar" id="ad-sidebar" adSlot="0987654321" />
+        
+        <!-- Segundo anúncio retangular para melhor monetização -->
+        <AdBanner format="rectangle" id="ad-rectangle" className="mt-8" adSlot="1122334455" />
+      </div>
+    </div>
+    
+    <!-- Anúncio horizontal para dispositivos móveis (visível apenas em telas pequenas) -->
+    <div class="lg:hidden mt-10">
+      <AdBanner format="rectangle" id="ad-mobile" adSlot="5566778899" />
     </div>
   </main>
 </Layout>
@@ -286,8 +348,8 @@ const getResourceIcon = (type: string): string => {
     const searchTerm = searchInput.value.trim().toLowerCase();
     if (searchTerm) {
       filtered = filtered.filter(map => {
-        // Verificar nome do mapa
-        const nameMatch = map.name.toLowerCase().includes(searchTerm);
+        // Verificar nome do mapa completo
+        const fullNameMatch = map.name.toLowerCase().includes(searchTerm);
         
         // Verificar recursos
         const resourceMatch = 
@@ -295,7 +357,26 @@ const getResourceIcon = (type: string): string => {
           map.dungeons?.some(r => r.type.toLowerCase().includes(searchTerm)) ||
           map.resources?.some(r => r.type.toLowerCase().includes(searchTerm));
         
-        return nameMatch || resourceMatch;
+        // Verificar iniciais/partes do nome com hífen
+        let initialsMatch = false;
+        if (searchTerm.includes('-')) {
+          // Extrai as partes da pesquisa (ex: "c-u" => ["c", "u"])
+          const searchParts = searchTerm.split('-').map(part => part.trim()).filter(Boolean);
+          
+          // Extrai as partes do nome do mapa (ex: "Cases-Ugumlos" => ["Cases", "Ugumlos"])
+          const nameParts = map.name.split('-').map(part => part.trim()).filter(Boolean);
+          
+          // Verifica se o número de partes é o mesmo e se cada parte começa com a inicial correspondente
+          if (searchParts.length <= nameParts.length) {
+            initialsMatch = searchParts.every((searchPart, index) => {
+              // Verifica se a parte do nome começa com o termo de busca ou se a inicial coincide
+              const namePart = nameParts[index].toLowerCase();
+              return namePart.startsWith(searchPart);
+            });
+          }
+        }
+        
+        return fullNameMatch || resourceMatch || initialsMatch;
       });
     }
 
@@ -307,20 +388,38 @@ const getResourceIcon = (type: string): string => {
     renderMaps();
   };
 
-  const sortMaps = (field: 'name' | 'tier') => {
+  const updateSortButtons = () => {
     [sortNameButton, sortTierButton].forEach(button => {
-      button.classList.remove('bg-gray-100', 'dark:bg-gray-700');
+      button.classList.remove('active');
     });
     
+    const activeButton = currentSort.field === 'name' ? sortNameButton : sortTierButton;
+    activeButton.classList.add('active');
+    
+    // Atualiza o ícone conforme a direção da ordenação
+    const iconElement = activeButton.querySelector('i');
+    if (iconElement) {
+      if (currentSort.field === 'name') {
+        iconElement.className = currentSort.ascending ? 
+          'fas fa-sort-alpha-down' : 
+          'fas fa-sort-alpha-up';
+      } else {
+        iconElement.className = currentSort.ascending ? 
+          'fas fa-sort-numeric-down' : 
+          'fas fa-sort-numeric-up';
+      }
+    }
+  };
+
+  const sortMaps = (field: 'name' | 'tier') => {
     if (currentSort.field === field) {
       currentSort.ascending = !currentSort.ascending;
     } else {
       currentSort.field = field;
       currentSort.ascending = true;
     }
-
-    const button = field === 'name' ? sortNameButton : sortTierButton;
-    button.classList.add('bg-gray-100', 'dark:bg-gray-700');
+    
+    updateSortButtons();
     
     filteredMaps.sort((a, b) => {
       const aValue = a[field];
@@ -334,6 +433,13 @@ const getResourceIcon = (type: string): string => {
     });
 
     renderMaps();
+  };
+
+  // Inicializar a aparência dos botões de ordenação
+  const initializeUI = () => {
+    updateSortButtons();
+    // Esconder o loading inicialmente
+    loadingElement.classList.add('hidden');
   };
 
   // Event Listeners
@@ -377,8 +483,14 @@ const getResourceIcon = (type: string): string => {
   };
 
   // Initialize on page load and after view transitions
-  document.addEventListener('astro:page-load', initializeMaps);
-  document.addEventListener('DOMContentLoaded', initializeMaps);
+  document.addEventListener('astro:page-load', () => {
+    initializeMaps();
+    initializeUI();
+  });
+  document.addEventListener('DOMContentLoaded', () => {
+    initializeMaps();
+    initializeUI();
+  });
 </script>
 
 <style>
@@ -400,5 +512,19 @@ const getResourceIcon = (type: string): string => {
   @keyframes loading {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+  }
+  
+  .map-wrapper {
+    transition: all 0.3s ease;
+  }
+  
+  /* Estilos para os botões de ordenação */
+  #sort-name.active, #sort-tier.active {
+    @apply bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 shadow;
+  }
+  
+  /* Estilo para os filtros de recursos ativos */
+  .resource-filter.active {
+    @apply bg-indigo-50 dark:bg-indigo-900/40 border-indigo-300 dark:border-indigo-500 text-indigo-700 dark:text-indigo-300;
   }
 </style>
