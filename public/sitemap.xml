@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+                http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+    <!-- Página inicial -->
+    <url>
+        <loc>https://avalonroads.noktech.com.br/</loc>
+        <lastmod>2023-11-15T00:00:00+00:00</lastmod>
+        <priority>1.00</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+    
+    <!-- Adicione aqui outras URLs se houver páginas adicionais no futuro -->
+    
+    <!-- URLs com termos de pesquisa populares -->
+    <url>
+        <loc>https://avalonroads.noktech.com.br/?search=tier8</loc>
+        <lastmod>2023-11-15T00:00:00+00:00</lastmod>
+        <priority>0.80</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+    <url>
+        <loc>https://avalonroads.noktech.com.br/?resource=WOOD</loc>
+        <lastmod>2023-11-15T00:00:00+00:00</lastmod>
+        <priority>0.80</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+    <url>
+        <loc>https://avalonroads.noktech.com.br/?resource=ORE</loc>
+        <lastmod>2023-11-15T00:00:00+00:00</lastmod>
+        <priority>0.80</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+    <url>
+        <loc>https://avalonroads.noktech.com.br/?resource=HIDE</loc>
+        <lastmod>2023-11-15T00:00:00+00:00</lastmod>
+        <priority>0.80</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+    <url>
+        <loc>https://avalonroads.noktech.com.br/?resource=FIBER</loc>
+        <lastmod>2023-11-15T00:00:00+00:00</lastmod>
+        <priority>0.80</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+    <url>
+        <loc>https://avalonroads.noktech.com.br/?resource=ROCK</loc>
+        <lastmod>2023-11-15T00:00:00+00:00</lastmod>
+        <priority>0.80</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+    <url>
+        <loc>https://avalonroads.noktech.com.br/?chest=GOLD</loc>
+        <lastmod>2023-11-15T00:00:00+00:00</lastmod>
+        <priority>0.80</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+    <url>
+        <loc>https://avalonroads.noktech.com.br/?dungeon=AVALON</loc>
+        <lastmod>2023-11-15T00:00:00+00:00</lastmod>
+        <priority>0.80</priority>
+        <changefreq>weekly</changefreq>
+    </url>
+</urlset> 

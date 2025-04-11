@@ -5,23 +5,88 @@ import AdManager from '../components/AdManager.astro';
 
 interface Props {
   title: string;
+  description?: string;
+  image?: string;
 }
 
-const { title } = Astro.props;
+const { 
+  title, 
+  description = "Explorador interativo de mapas Roads of Avalon do jogo Albion Online. Encontre recursos, baús e dungeons nas Estradas de Avalon.",
+  image = "/preview.png" 
+} = Astro.props;
+
+// URL base para SEO
+const siteUrl = "https://avalonroads.noktech.com.br";
+const canonicalURL = new URL(Astro.url.pathname, siteUrl).toString();
 ---
 
 <!DOCTYPE html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="description" content="Encontre mapas Avalon Roads do Albion Online">
     <meta name="viewport" content="width=device-width" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={canonicalURL} />
+    
+    <!-- SEO Meta Tags Primárias -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="keywords" content="Albion Online, Roads of Avalon, Estradas de Avalon, mapas Avalon, Albion Avalon, recursos Albion, baús Avalon Roads, tiers Avalon, dungeons Roads of Avalon, Albion Roads, Roads Avalon, explorador de mapas, PvP Albion, PvE Albion" />
+    <meta name="author" content="Brendown Ferreira - AO-Noki" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, siteUrl).toString()} />
+    <meta property="og:site_name" content="Avalon Roads | Explorador de Mapas Albion Online" />
+    <meta property="og:locale" content="pt_BR" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalURL} />
+    <meta property="twitter:title" content={title} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={new URL(image, siteUrl).toString()} />
+    
+    <!-- Outras Meta Tags -->
+    <meta name="generator" content={Astro.generator} />
+    <meta name="application-name" content="Avalon Roads Explorer" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="theme-color" content="#4f46e5" />
+    <meta name="robots" content="index, follow" />
+    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" crossorigin="anonymous" />
-    <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
+    
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2258595237443690" crossorigin="anonymous"></script>
+    
+    <!-- Structured Data / Schema.org -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Avalon Roads Explorer - Albion Online",
+        "url": "https://avalonroads.noktech.com.br",
+        "description": "Explorador interativo de mapas Roads of Avalon do jogo Albion Online. Encontre recursos, baús e dungeons nas Estradas de Avalon.",
+        "applicationCategory": "GameApplication",
+        "genre": "MMORPG Resource Tool",
+        "operatingSystem": "Web",
+        "author": {
+          "@type": "Organization",
+          "name": "AO-Noki",
+          "url": "https://github.com/AO-Noki"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "screenshot": "https://avalonroads.noktech.com.br/preview.png"
+      }
+    </script>
+    
     <!-- Preload theme choice to avoid FOUC -->
     <script is:inline>
       const theme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -42,6 +107,9 @@ const { title } = Astro.props;
           <div class="mb-4 md:mb-0">
             <p class="text-gray-600 dark:text-gray-300 text-sm">
               &copy; {new Date().getFullYear()} Avalon Roads - Todos os direitos reservados
+            </p>
+            <p class="text-gray-500 dark:text-gray-400 text-xs mt-1">
+              Albion Online é uma marca registrada da Sandbox Interactive GmbH
             </p>
           </div>
           <div class="text-gray-500 dark:text-gray-400 text-sm">

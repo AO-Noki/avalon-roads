@@ -68,9 +68,16 @@ function getDungeonIcon(type: string) {
   const cleanType = type.replace('DUNGEON_', '').toLowerCase();
   return `/icons/dungeon_${cleanType}.png`;
 }
+
+// SEO - Título e descrição
+const pageTitle = "Avalon Roads | Explorador de Mapas de Albion Online - Roads of Avalon";
+const pageDescription = "Explore os mapas de Roads of Avalon (Estradas de Avalon) do jogo Albion Online. Encontre recursos, baús e dungeons nas Roads of Avalon por tier, tipo e quantidade. Ferramenta essencial para jogadores de Albion Online.";
 ---
 
-<Layout title="Avalon Roads | A.O. NOKI">
+<Layout 
+  title={pageTitle}
+  description={pageDescription}
+>
   <!-- Dados dos mapas escondidos para JavaScript -->
   <script id="maps-data" type="application/json" set:html={JSON.stringify(maps)}>
   </script>
@@ -482,28 +489,57 @@ function getDungeonIcon(type: string) {
     });
   </script>
 
-  <header class="bg-gradient-to-b from-indigo-700 to-indigo-900 dark:from-indigo-900 dark:to-indigo-950">
-    <div class="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center mb-6">
-        <div>
-          <h1 class="text-4xl font-bold text-white mb-2 flex items-center">
-            <i class="fas fa-map-marked-alt mr-3 text-indigo-300"></i>
-            Avalon Roads | <a href="https://github.com/AO-NOKI" target="_blank" class="text-indigo-100 hover:text-indigo-200">A.O. NOKI</a>
+  <header class="bg-white dark:bg-gray-800 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex items-center">
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            <a href="/" class="flex items-center">
+              <span class="text-indigo-600 dark:text-indigo-400">Avalon Roads</span>
+              <span class="hidden sm:inline text-gray-600 dark:text-gray-400 text-lg ml-2 font-normal">
+                | Explorador de Mapas Roads of Avalon - Albion Online
+              </span>
+            </a>
           </h1>
-          <p class="text-indigo-100 text-lg">
-            Explore o conteúdo de <span id="total-maps" class="font-semibold">{maps.length}</span> mapas das estradas avalonianas de Albion Online.
-          </p>
-          <p class="text-indigo-300 text-sm mt-1 flex items-center">
-            <i class="fas fa-clock mr-2"></i>
-            Última atualização: {lastUpdated}
-          </p>
         </div>
-        <ThemeToggle />
+        
+        <div class="flex items-center space-x-3">
+          <ThemeToggle />
+          <a href="https://github.com/AO-Noki/avalonroads" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+            <i class="fab fa-github text-xl"></i>
+            <span class="sr-only">GitHub</span>
+          </a>
+        </div>
       </div>
     </div>
   </header>
 
-  <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Descrição do projeto -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-5 mb-8">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 class="text-xl font-bold text-gray-900 dark:text-white">Explorador de Roads of Avalon - Albion Online</h2>
+          <p class="text-gray-600 dark:text-gray-300 mt-1">
+            Descubra recursos, baús e dungeons nas Estradas de Avalon. Encontre mapas de Avalon Roads por tier e tipo.
+          </p>
+          <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">
+            Última atualização: {lastUpdated}
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <a href="https://www.albiononline.com" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm flex items-center">
+            <i class="fas fa-external-link-alt mr-1"></i>
+            Site oficial Albion Online
+          </a>
+          <a href="https://wiki.albiononline.com/wiki/Roads_of_Avalon" target="_blank" rel="noopener noreferrer" class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm flex items-center">
+            <i class="fas fa-book mr-1"></i>
+            Wiki Roads of Avalon
+          </a>
+        </div>
+      </div>
+    </div>
+
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 p-6 mb-8 mt-5">
       <!-- Filtros superiores -->
       <div class="flex flex-col lg:flex-row gap-4 mb-6">

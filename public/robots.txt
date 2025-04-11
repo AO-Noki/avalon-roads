@@ -1,0 +1,9 @@
+# Avalon Roads - Explorador de Mapas de Albion Online
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://avalonroads.noktech.com.br/sitemap.xml
+
+# Tempos de crawl recomendados
+Crawl-delay: 10 

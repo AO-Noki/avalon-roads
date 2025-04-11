@@ -1,116 +1,133 @@
-# Avalon Roads - <https://avalonroads.noktech.com.br/>
+# Avalon Roads | Albion Online Maps Explorer - <https://avalonroads.noktech.com.br/>
 
-Um explorador interativo de mapas Avalon Roads do Albion Online, construído com Astro, TypeScript e Tailwind CSS.
+An interactive explorer for Albion Online's Roads of Avalon maps, built with Astro, TypeScript, and Tailwind CSS. Easily navigate through all Avalon Roads maps, find resources, chests, and dungeons.
 
-## Funcionalidades
+## About the Avalon Roads Project
 
-- 🗺️ Navegue e pesquise mapas Avalon
-- 🔍 Filtre por recursos e tiers
-- 🌓 Modo claro/escuro com suporte a preferência do sistema
-- 🎯 Indicadores de tipo de recurso com tooltips
-- ⌨️ Atalhos de teclado para navegação rápida
-- 📱 Design totalmente responsivo
+Avalon Roads is an essential tool for Albion Online players who explore the Roads of Avalon. This web application allows:
 
-## Stack Tecnológica
+- 🗺️ Complete navigation and search of all Avalon Roads maps
+- 🔍 Advanced filtering by resources, chests, dungeons, and tiers
+- 🌓 Light/dark mode with system preference support
+- 🎯 Detailed resource type indicators with tooltips
+- ⌨️ Keyboard shortcuts for quick navigation
+- 📱 Fully responsive design for desktop and mobile
 
-- [Astro](https://astro.build) - Gerador de Site Estático
-- [TypeScript](https://www.typescriptlang.org/) - Segurança de Tipos
-- [Tailwind CSS](https://tailwindcss.com) - Estilização
-- [Font Awesome](https://fontawesome.com) - Ícones
-- [Bun](https://bun.sh) - Runtime JavaScript e gerenciador de pacotes
+## Why Use Avalon Roads?
 
-## Desenvolvimento
+The Roads of Avalon are an essential part of the Albion Online world, offering unique opportunities for small group PvP, resource farming, and access to exclusive areas. Our tool helps players:
 
-### 1. Instale o Bun (caso ainda não tenha)
+- Find Albion Avalon maps with specific resources (ore, wood, fiber, stone, hide)
+- Locate valuable chests in the Roads of Avalon
+- Discover dungeons for PvE in the Roads of Avalon
+- Plan efficient routes through the Avalon Roads
+
+## Technology Stack
+
+- [Astro](https://astro.build) - Static Site Generator
+- [TypeScript](https://www.typescriptlang.org/) - Type Safety
+- [Tailwind CSS](https://tailwindcss.com) - Styling
+- [Font Awesome](https://fontawesome.com) - Icons
+- [Bun](https://bun.sh) - JavaScript Runtime and package manager
+
+## Development
+
+### 1. Install Bun (if you don't have it yet)
 
 ```bash
-# Para macOS, Linux e WSL (Windows Subsystem for Linux)
+# For macOS, Linux, and WSL (Windows Subsystem for Linux)
 curl -fsSL https://bun.sh/install | bash
 
-# Para Windows (via PowerShell)
+# For Windows (via PowerShell)
 powershell -c "irm bun.sh/install.ps1 | iex"
 ```
 
-Verifique a instalação:
+Verify the installation:
 
 ```bash
 bun --version
 ```
 
-### 2. Instale as dependências
+### 2. Install dependencies
 
 ```bash
 bun install
 ```
 
-### 3. Extraia os dados dos mapas (se você tiver o arquivo HTML original)
-
-```bash
-bun run extract-maps [caminho/para/Avalon Map.html]
-```
-
-### 4. Inicie o servidor de desenvolvimento
+### 3. Start the development server
 
 ```bash
 bun run dev
 ```
 
-### 5. Compile para produção
+### 4. Build for production
 
 ```bash
 bun run build
 ```
 
-### 6. Visualize a compilação de produção
+### 5. Preview the production build
 
 ```bash
 bun run preview
 ```
 
-## Estrutura do Projeto
+## Project Structure
 
 ```text
 /
 ├── public/
-│   └── icons/           # Ícones de recursos do jogo
+│   └── icons/           # Albion Online game resource icons
+│   └── maps/            # Roads of Avalon map images
 ├── src/
-│   ├── components/      # Componentes Astro reutilizáveis
-│   ├── data/            # Dados dos mapas em formato JSON
-│   ├── layouts/         # Layouts de página
-│   ├── pages/           # Componentes de página
-│   ├── scripts/         # Scripts utilitários
-│   ├── types/           # Definições de tipos TypeScript
-│   └── utils/           # Funções utilitárias
+│   ├── components/      # Reusable Astro components
+│   ├── data/            # Avalon maps data in JSON format
+│   ├── layouts/         # Page layouts
+│   ├── pages/           # Page components
+│   ├── scripts/         # Utility scripts
+│   ├── types/           # TypeScript type definitions
+│   └── utils/           # Utility functions
 └── package.json
 ```
 
-## Por que Bun?
+## Why Bun?
 
-Estamos usando Bun por vários motivos:
+We're using Bun for several reasons:
 
-- **Desempenho superior**: Até 3x mais rápido que Node.js para execução e instalação de pacotes
-- **Compatibilidade**: Compatível com ecossistema npm existente
-- **Tudo em um**: Runtime JavaScript, bundler, transpilador e gerenciador de pacotes
-- **Recursos modernos**: Suporte nativo a TypeScript, JSX, modulos ES e outras funcionalidades modernas
+- **Superior performance**: Up to 3x faster than Node.js for execution and package installation
+- **Compatibility**: Compatible with existing npm ecosystem
+- **All-in-one**: JavaScript runtime, bundler, transpiler, and package manager
+- **Modern features**: Native support for TypeScript, JSX, ES modules, and other modern features
 
-## Contribuindo
+## Contributing
 
-1. Faça um fork do repositório
-2. Crie sua branch de feature (`git checkout -b feature/nova-funcionalidade`)
-3. Faça commit das suas alterações (`git commit -m 'Adicionar nova funcionalidade'`)
-4. Faça push para a branch (`git push origin feature/nova-funcionalidade`)
-5. Abra um Pull Request
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/new-functionality`)
+3. Commit your changes (`git commit -m 'Add new functionality'`)
+4. Push to the branch (`git push origin feature/new-functionality`)
+5. Open a Pull Request
 
-## Créditos
+## Albion Online and Roads of Avalon - Useful Information
 
-Desenvolvido por [Brendown Ferreira](https://github.com/Br3n0k)
+Albion Online is a sandbox MMORPG with a medieval open world, developed by Sandbox Interactive. The Roads of Avalon are a system of interconnected portals that allow travel between different areas of the game.
 
-Parte da organização [AO-Noki](https://github.com/AO-Noki) - Ferramentas para Albion Online
+Characteristics of the Roads of Avalon:
+- **Tier system**: From tier 1 to tier 8, with different levels of resources and dangers
+- **Rare resources**: Ores, wood, fiber, stone, and hide of different tiers
+- **Valuable chests**: Scattered throughout Avalon Roads maps
+- **Dungeons**: PvE areas with mobs and bosses
+- **Small group PvP**: Ideal for small and medium guilds
 
-## Licença
+## Credits
 
-Este projeto está licenciado sob a Licença MIT - veja o arquivo LICENSE para detalhes.
+Developed by [Brendown Ferreira](https://github.com/Br3n0k)
+
+Part of the [AO-Noki](https://github.com/AO-Noki) organization - Tools for Albion Online
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Preview
 
-![Avalon Roads Preview](preview.png)
+![Avalon Roads Preview - Albion Online Maps Explorer](preview.png)
